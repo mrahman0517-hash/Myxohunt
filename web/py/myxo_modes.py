@@ -15,9 +15,10 @@ Kaiser 1980; Harris 1998), so these rules read the prey food within reach, never
                     (B75, B84).
   scout mode        a lucky draw: the chance starts when prey food within reach drops below
                     scout_food and is at its top at zero food, where 10% of cells scout at once.
-                    Off-trail A-motility, stronger slime, keener smell, no division. A spell ends
-                    when prey food is back or at random. Starving cells may scout, and a starving
-                    scout keeps every starving perk.
+                    Off-trail A-motility, stronger slime, keener smell, steering toward the smell,
+                    no division. Since B95 a spell ends when the scout finds prey food or starts
+                    starving (random ends optional), a cell rests before scouting again, and at most
+                    10% of cells scout at once. Starving cells scout only if stringent_scouts is on.
 
 The clock runs on the biology clock; switching scout mode on and off runs on the real clock,
 like movement.
@@ -64,17 +65,58 @@ def scout_chance(world, food):
     return s.scout_start_rate * np.clip(1.0 - food / s.scout_food, 0.0, 1.0)
 
 
+def resting(world):
+    """True for cells that scouted recently and must wait scout_rest_time before scouting again (B95)."""
+    w = world
+    if not hasattr(w, "scout_rest_uids"):          # worlds pickled before B95 (e.g. web scenes)
+        w.scout_rest_uids, w.scout_rest_until = np.zeros(0, dtype=np.int64), np.zeros(0)
+    if len(w.scout_rest_uids) == 0:
+        return np.zeros(len(w.myxo.uid), dtype=bool)
+    live = w.scout_rest_until > w.t
+    w.scout_rest_uids, w.scout_rest_until = w.scout_rest_uids[live], w.scout_rest_until[live]
+    return np.isin(w.myxo.uid, w.scout_rest_uids)
+
+
+def start_rest(world, uids):
+    """Cells whose spell just ended rest for scout_rest_time real minutes (B95)."""
+    w = world
+    if len(uids) == 0 or w.settings.scout_rest_time <= 0:
+        return
+    w.scout_rest_uids = np.concatenate([w.scout_rest_uids, uids])
+    w.scout_rest_until = np.concatenate([w.scout_rest_until, np.full(len(uids), w.t + w.settings.scout_rest_time)])
+
+
+def cap_starts(world, begin, keep):
+    """At most scout_max_share of all cells scout at once: extra would-be scouts are dropped at random (B95)."""
+    room = max(int(world.settings.scout_max_share * len(begin)) - int(keep.sum()), 0)
+    idx = np.nonzero(begin)[0]
+    if len(idx) > room:
+        begin = begin.copy()
+        begin[world.rng.choice(idx, len(idx) - room, replace=False)] = False
+    return begin
+
+
 def update_scouts(world):
-    """Start and stop scouting for this tick (B71, B83). No random numbers are used when scouting
-    is off."""
+    """Start and stop scouting for this tick (B71, B83, B95). A spell ends when the scout finds prey
+    food, when it starts starving (unless stringent_scouts), or, with scout_random_end, at random.
+    After a spell a cell rests scout_rest_time before it may scout again, and at most
+    scout_max_share of cells scout at once. No random numbers are used when scouting is off."""
     s, m = world.settings, world.myxo
     if s.scout_start_rate <= 0 or len(m.uid) == 0:
         m.scout[:] = False
         return
     food = food_around(world)
     roll = world.rng.random(len(m.uid))
-    keep = m.scout & (food < s.scout_food) & (roll >= s.dt / s.scout_episode)
-    begin = ~m.scout & (roll < scout_chance(world, food) * s.dt)
+    ends = food >= s.scout_food
+    if s.scout_random_end:
+        ends = ends | (roll < s.dt / s.scout_episode)
+    allowed = ~resting(world)
+    if not s.stringent_scouts:
+        starving = stringent(world)
+        ends, allowed = ends | starving, allowed & ~starving
+    keep = m.scout & ~ends
+    begin = cap_starts(world, ~m.scout & allowed & (roll < scout_chance(world, food) * s.dt), keep)
+    start_rest(world, m.uid[m.scout & ends])
     m.scout = keep | begin
 
 

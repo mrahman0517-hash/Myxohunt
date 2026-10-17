@@ -70,3 +70,6 @@ button.small { padding: 4px 10px; font-size: 13px; }
   .layout { grid-template-columns: 1fr; height: auto; }
   .panel { overflow: visible; }
 }
+select.wide { width: 100%; background: var(--face); color: var(--text); border: 0; border-radius: 5px; padding: 6px; font: inherit; }
+#world { cursor: grab; touch-action: none; }
+#zoomHint { white-space: nowrap; }

@@ -58,19 +58,35 @@ class Simulation:
         theta = geo.angle_of(heading)
         ripples = align.ripple_mask(w, m.nodes[:, 0])
         off_matrix = ~ripples & active
-        followers, scouts = off_matrix & ~m.scout, off_matrix & m.scout
+        invaders = off_matrix & ~m.scout & self.touching_live_prey()      # B95
+        followers, scouts = off_matrix & ~m.scout & ~invaders, off_matrix & m.scout
         turn = np.zeros(state.count(m))
         turn[ripples] = align.ripple_turn(theta[ripples], align.local_axis(w, m.nodes[ripples, 0]), s)
-        if followers.any():
-            align.eps_lay(f.eps, f.eps_spacing, m.nodes[followers, -1], s)
+        if (followers | invaders).any():
+            align.eps_lay(f.eps, f.eps_spacing, m.nodes[followers | invaders, -1], s)
         if scouts.any():
             align.eps_lay(f.eps_scout, f.eps_spacing, m.nodes[scouts, -1], s, s.scout_slime)
         if followers.any():
-            turn[followers] = align.eps_turn(f.eps, f.eps_spacing, m.nodes[followers, 0], theta[followers],
-                                             w.eps_offsets, s, w.rng, extra=f.eps_scout)
+            turn[followers], on_trail = align.eps_turn(f.eps, f.eps_spacing, m.nodes[followers, 0], theta[followers],
+                                                       w.eps_offsets, s, w.rng, extra=f.eps_scout, with_trail=True)
+            leaders = np.nonzero(followers)[0][~on_trail]                  # no slime ahead: front of a stream
+            turn[leaders] = align.smell_turn(w, m.nodes[leaders, 0], theta[leaders])
         if scouts.any():
-            turn[scouts] = align.scout_turn(int(scouts.sum()), s, w.rng)
+            turn[scouts] = (align.scout_turn(int(scouts.sum()), s, w.rng)
+                            + align.smell_turn(w, m.nodes[scouts, 0], theta[scouts]))
+        if invaders.any():
+            turn[invaders] = align.smell_turn(w, m.nodes[invaders, 0], theta[invaders])
         myxo_body.rotate_heads(m.nodes, turn, active & (turn != 0))
+
+    def touching_live_prey(self):
+        """True for Myxo touching a living E. coli this tick, when invasion on contact is on (B95)."""
+        w, n = self.world, state.count(self.world.myxo)
+        mask = np.zeros(n, dtype=bool)
+        if not w.settings.invade_on_contact or self.touches is None or len(self.touches) == 0:
+            return mask
+        live = w.ecoli.lysis_timer[self.touches[:, 1]] < 0
+        mask[self.touches[live, 0]] = True
+        return mask
 
     def update_signal(self, active, heading, head_before, speed_factor):
         """Step 7: frustration from intended vs real head movement, into each active cell's memory.

@@ -34,23 +34,107 @@ def fmt_parts(fmt):
     return dict(prefix=prefix, suffix=suffix, percent=spec.endswith("%"))
 
 
+ATTACK_GROW = 50.0       # real min the colony grows alone before the hunters arrive (attack scene)
+ATTACK_DROPS, ATTACK_SIZE = 4, 60
+PAPER_BOX = dict(box=65.0, start_colonies=0, myxo_groups=0, myxo_singles=0, eps_fade_time=float("inf"),
+                 matrix_half_life=float("inf"), chemo_strength=0.0, speedup=1.0, scout_start_rate=0.0)
+SCENES = {   # B95: what each scene changes on top of the chosen settings
+    "world": {},
+    "swarm": PAPER_BOX,
+    "ripple": PAPER_BOX,
+    "attack": dict(start_colonies=1, myxo_groups=0, myxo_singles=0, ecoli_seed_interval=0.0,
+                   richness_min=0.3, richness_max=1.0),
+}
+WARM = {"swarm": 30.0, "ripple": 30.0, "attack": ATTACK_GROW}   # real min pre-run by web/make_scenes.py
+SCENE_DIR = "/sim/scenes"
+
+
+def colony_centre_and_radius(world):
+    """Centre (circular mean, safe across the edges) and outer radius of the E. coli."""
+    box, c = world.settings.box, world.ecoli.centre
+    ang = c / box * 2 * np.pi
+    centre = (np.arctan2(np.sin(ang).mean(0), np.cos(ang).mean(0)) % (2 * np.pi)) / (2 * np.pi) * box
+    d = geo.min_image(c - centre, box)
+    return centre, float(np.linalg.norm(d, axis=1).max())
+
+
 class Controller:
     """One running world and the settings the page has chosen."""
 
     def __init__(self):
-        self.values, self.saved_on = dict(P.RECOMMENDED), {}
+        self.values, self.saved_on, self.scene = dict(P.RECOMMENDED), {}, "world"
         self.reset()
 
     # ------------------------------------------------------------ settings
     def desired(self):
-        """The chosen settings (those applied 'on reset' take effect in the next world)."""
-        return make_settings("live", **self.values)
+        """The chosen settings (those applied 'on reset' take effect in the next world), with the
+        scene's own changes on top."""
+        return make_settings("live", **{**self.values, **SCENES[self.scene]})
 
     def reset(self):
-        """A new world from the chosen settings."""
-        self.sim = Simulation(self.desired())
+        """A new world from the chosen settings and scene; the paper's boxes and the attack start
+        from a state pre-run on a PC (web/make_scenes.py) when one ships with the page."""
+        if self.load_warm():
+            return
+        self.build()
+
+    def load_warm(self):
+        """Start from a pre-run state, if there is one for this scene."""
+        import gzip
+        import os
+        import pickle
+        path = os.path.join(SCENE_DIR, self.scene + ".pkl.gz")
+        if self.scene == "world" or not os.path.exists(path):
+            return False
+        with gzip.open(path, "rb") as fh:
+            self.sim, self.focus = pickle.load(fh)
+        for key, value in {**self.values, **SCENES[self.scene]}.items():   # the page's live choices
+            if key not in ("box", "start_colonies", "myxo_groups", "myxo_singles", "richness_min", "richness_max"):
+                setattr(self.sim.world.settings, key, value)
+        self.attacked = True
         self.rows_sent = 0
         self.world_id = getattr(self, "world_id", 0) + 1
+        return True
+
+    def build(self):
+        """A brand-new world for the scene."""
+        self.sim = Simulation(self.desired(), seed_cells=self.scene in ("world", "attack"))
+        w = self.sim.world
+        if self.scene in ("swarm", "ripple"):
+            import seeding
+            if self.scene == "ripple":
+                f = w.fields
+                f.matrix[:], f.matrix_smooth[:], f.axis_c[:], f.axis_s[:] = 1.0, 1.0, 1.0, 0.0
+                seeding.uniform_myxo(w, 1000, aligned_axis=0.0)
+            else:
+                seeding.uniform_myxo(w, 370)
+        self.attacked = self.scene != "attack"
+        self.focus = None
+        if self.scene == "attack" and len(w.ecoli.uid):
+            c = w.ecoli.centre[0]
+            self.focus = [float(c[0]), float(c[1]), 80.0]
+        self.rows_sent = 0
+        self.world_id = getattr(self, "world_id", 0) + 1
+
+    def set_scene(self, name):
+        """Switch scene: a new world."""
+        self.scene = name
+        self.reset()
+
+    def maybe_attack(self):
+        """Attack scene: once the colony has grown, drops of hunters arrive at its edge."""
+        w = self.sim.world
+        if self.attacked or w.t < ATTACK_GROW:
+            return
+        import seeding
+        import state
+        centre, radius = colony_centre_and_radius(w)
+        for k in range(ATTACK_DROPS):
+            a = 2 * np.pi * k / ATTACK_DROPS
+            spot = centre + (radius + 4.0) * np.array([np.cos(a), np.sin(a)])
+            state.append_rows(w.myxo, seeding.myxo_group(w, spot, ATTACK_SIZE))
+        self.focus = [float(centre[0]), float(centre[1]), 2 * radius + 24]
+        self.attacked = True
 
     def recommended(self):
         """Back to the recommended settings, in a new world."""
@@ -118,6 +202,8 @@ class Controller:
         n = 0
         while n < n_max and (time.perf_counter() - t0) * 1000.0 < budget_ms:
             self.sim.step()
+            if not self.attacked:
+                self.maybe_attack()
             n += 1
         if n:
             self.ms_per_step = (time.perf_counter() - t0) * 1000.0 / n
@@ -174,7 +260,7 @@ class Controller:
         nodes, colours, killing = self.myxo_arrays()
         rows = self.sim.stats.rows[self.rows_sent:]
         self.rows_sent = len(self.sim.stats.rows)
-        meta = dict(world=self.world_id, t=w.t, bio_h=w.bio_t / 60.0, box=w.settings.box, ground_n=ground.shape[0],
+        meta = dict(world=self.world_id, scene=self.scene, focus=self.focus, t=w.t, bio_h=w.bio_t / 60.0, box=w.settings.box, ground_n=ground.shape[0],
                     slime_n=slime.shape[0], n_ecoli=int(alive.sum()), dormant=int((alive & e.dormant).sum()),
                     n_myxo=len(m.uid), starving=int(myxo_modes.stringent(w).sum()) if len(m.uid) else 0,
                     killing=int(killing.sum()), n_spores=len(w.spores), ms_per_step=getattr(self, "ms_per_step", 0.0),

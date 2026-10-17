@@ -17,10 +17,14 @@ async function boot() {
     await py.loadPackage(["numpy", "scipy"]);
     status("Loading the simulation…");
     const fresh = { cache: "no-cache" };          // always check for updated simulation files
-    const files = await (await fetch("py/manifest.json", fresh)).json();
-    py.FS.mkdirTree("/sim");
-    for (const name of files) {
+    const manifest = await (await fetch("py/manifest.json", fresh)).json();
+    py.FS.mkdirTree("/sim/scenes");
+    for (const name of manifest.files) {
       py.FS.writeFile("/sim/" + name, await (await fetch("py/" + name, fresh)).text());
+    }
+    for (const name of manifest.scenes) {          // pre-run starting states (web/make_scenes.py)
+      const data = new Uint8Array(await (await fetch("scenes/" + name, fresh)).arrayBuffer());
+      py.FS.writeFile("/sim/scenes/" + name, data);
     }
     py.runPython("import sys; sys.path.insert(0, '/sim')");
     status("Building the world…");
@@ -81,11 +85,12 @@ onmessage = (e) => {
       case "switch": ctl.set_switch(m.index, m.on); break;
       case "evidence": ctl.set_evidence(m.index, m.option); break;
       case "reset": ctl.reset(); break;
+      case "scene": ctl.set_scene(m.scene); break;
       case "recommended": ctl.recommended(); break;
       case "run": running = m.on; break;
       case "speed": warp = m.warp; debt = 0; break;
     }
-    if (["param", "switch", "evidence", "reset", "recommended"].includes(m.type)) {
+    if (["param", "switch", "evidence", "reset", "recommended", "scene"].includes(m.type)) {
       postMessage({ type: "state", state: ctl.state_json() });
     }
   } catch (err) {

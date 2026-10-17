@@ -9,7 +9,7 @@ const $ = (id) => document.getElementById(id);
 const worker = new Worker("worker.js");
 
 let frame = null, worldId = 0, rows = [], drawPending = false, running = true;
-let lastT = null, lastWall = 0, speedNow = 0;
+let lastT = null, lastWall = 0, speedNow = 0, lastFocus = null;
 const controls = {}, switches = [], evidence = [];
 const groundC = document.createElement("canvas"), slimeC = document.createElement("canvas");
 
@@ -137,7 +137,9 @@ worker.onmessage = (e) => {
 
 function onFrame(m) {
   const meta = JSON.parse(m.meta);
-  if (meta.world !== worldId) { worldId = meta.world; rows = []; lastT = null; }
+  if (meta.world !== worldId) { worldId = meta.world; rows = []; lastT = null; view.cx = null; }
+  if (meta.focus && !lastFocus) view.cx = null;
+  lastFocus = meta.focus;
   for (const r of meta.rows) rows.push(r);
   const now = performance.now();
   if (lastT === null) { lastT = meta.t; lastWall = now; }
@@ -165,20 +167,46 @@ function requestDraw() {
   setTimeout(draw, 250);          // in case the browser holds back animation frames
 }
 
+// The view: a square `span` µm wide around (cx, cy), wrap-around safe (zoom and pan; B95).
+const view = { cx: null, cy: null, span: null, box: null };
+const SCENE_HINTS = {
+  world: "Two colonies grow; hunters arrive over the first 10 h and follow slime highways.",
+  attack: "A grown colony; four drops of 60 hunters at its edge invade, kill (white rims) and ripple on the remains.",
+  swarm: "370 cells on bare ground, biology at real speed: streams form; white dot = leading pole, orange = just reversed.",
+  ripple: "1,000 cells on prey remains: waves travel left-right; reversals (orange) gather where waves collide.",
+};
+
+function fitView(box, focus) {
+  view.box = box;
+  if (focus) { [view.cx, view.cy, view.span] = focus; view.span = Math.min(view.span, box); }
+  else { view.cx = view.cy = box / 2; view.span = box; }
+}
+
+function mapper(S) {
+  const { cx, cy, span, box } = view, k = S / span, h = span / 2;
+  const wrap = (d) => d - box * Math.round(d / box);
+  return { k, X: (x) => (wrap(x - cx) + h) * k, Y: (y) => S - (wrap(y - cy) + h) * k };
+}
+
 function blitImage(ctx, canvas, bytes, n, S) {
   canvas.width = canvas.height = n;
   canvas.getContext("2d").putImageData(new ImageData(bytes, n, n), 0, 0);
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(canvas, 0, 0, S, S);
+  const { cx, cy, span, box } = view, k = S / span, size = box * k;
+  const x0 = (span / 2 - cx) * k, y0 = S - (box - cy + span / 2) * k;     // where the world's corner lands
+  for (const i of [-1, 0, 1]) for (const j of [-1, 0, 1]) {
+    const x = x0 + i * size, y = y0 + j * size;
+    if (x < S && x + size > 0 && y < S && y + size > 0) ctx.drawImage(canvas, x, y, size, size);
+  }
 }
 
-function cellPath(nodes, i, sc, S, half) {
+function cellPath(nodes, i, M, half) {
   const p = new Path2D();
   let px = 0, py = 0;
   for (let j = 0; j < 10; j++) {
     const x = nodes[(i * 10 + j) * 2], y = nodes[(i * 10 + j) * 2 + 1];
-    if (j === 0 || Math.abs(x - px) > half || Math.abs(y - py) > half) p.moveTo(x * sc, S - y * sc);
-    else p.lineTo(x * sc, S - y * sc);
+    if (j === 0 || Math.abs(x - px) > half || Math.abs(y - py) > half) p.moveTo(M.X(x), M.Y(y));
+    else p.lineTo(M.X(x), M.Y(y));
     px = x; py = y;
   }
   return p;
@@ -188,31 +216,33 @@ function drawWorld() {
   const f = frame;
   if (!f) return;
   const canvas = $("world"), ctx = canvas.getContext("2d"), S = canvas.width;
-  const box = f.meta.box, sc = S / box, half = box / 2;
+  const box = f.meta.box, half = box / 2;
+  if (view.box !== box || view.cx === null) fitView(box, f.meta.focus);
+  const M = mapper(S), sc = M.k;
+  ctx.fillStyle = "#fffaea"; ctx.fillRect(0, 0, S, S);
   blitImage(ctx, groundC, f.ground, f.meta.ground_n, S);
   blitImage(ctx, slimeC, f.slime, f.meta.slime_n, S);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  // spores
   ctx.fillStyle = COL.spore; ctx.strokeStyle = COL.sporeEdge; ctx.lineWidth = 1;
   for (let i = 0; i < f.spores.length; i += 2) {
-    ctx.beginPath(); ctx.arc(f.spores[i] * sc, S - f.spores[i + 1] * sc, Math.max(2, 0.75 * sc), 0, 2 * Math.PI);
+    ctx.beginPath(); ctx.arc(M.X(f.spores[i]), M.Y(f.spores[i + 1]), Math.max(2, 0.75 * sc), 0, 2 * Math.PI);
     ctx.fill(); ctx.stroke();
   }
-  // E. coli: three batches by state
   const paths = [new Path2D(), new Path2D(), new Path2D()];
   const r = f.rods;
   for (let i = 0; i < f.kind.length; i++) {
     const x0 = r[4 * i], y0 = r[4 * i + 1], x1 = r[4 * i + 2], y1 = r[4 * i + 3];
     if (Math.abs(x1 - x0) > half || Math.abs(y1 - y0) > half) continue;
-    paths[f.kind[i]].moveTo(x0 * sc, S - y0 * sc);
-    paths[f.kind[i]].lineTo(x1 * sc, S - y1 * sc);
+    const X0 = M.X(x0), X1 = M.X(x1), Y0 = M.Y(y0), Y1 = M.Y(y1);
+    if (Math.abs(X1 - X0) > S / 2 || Math.abs(Y1 - Y0) > S / 2) continue;   // split by the view's edge
+    paths[f.kind[i]].moveTo(X0, Y0);
+    paths[f.kind[i]].lineTo(X1, Y1);
   }
   ctx.lineWidth = Math.max(1, sc * 1.0);
   [COL.ecoli, COL.dormant, COL.dead].forEach((c, k) => { ctx.strokeStyle = c; ctx.stroke(paths[k]); });
-  // Myxo: killing rims, bodies, leading poles
   const n = f.killing.length, w = Math.max(1, 0.7 * sc), cells = [];
-  for (let i = 0; i < n; i++) cells.push(cellPath(f.nodes, i, sc, S, half));
+  for (let i = 0; i < n; i++) cells.push(cellPath(f.nodes, i, M, half));
   ctx.strokeStyle = COL.rim;
   ctx.lineWidth = w + Math.max(4, 0.8 * w);
   for (let i = 0; i < n; i++) if (f.killing[i]) ctx.stroke(cells[i]);
@@ -224,20 +254,49 @@ function drawWorld() {
   }
   const poles = new Path2D(), pr = Math.max(1.5, 0.8 * w);
   for (let i = 0; i < n; i++) {
-    const x = f.nodes[i * 20] * sc, y = S - f.nodes[i * 20 + 1] * sc;
+    const x = M.X(f.nodes[i * 20]), y = M.Y(f.nodes[i * 20 + 1]);
     poles.moveTo(x + pr, y);
     poles.arc(x, y, pr, 0, 2 * Math.PI);
   }
   ctx.fillStyle = COL.pole;
   ctx.fill(poles);
-  // scale bar
-  const dpr = window.devicePixelRatio || 1, len = box > 80 ? 20 : 10, px = len * sc;
+  const dpr = window.devicePixelRatio || 1, span = view.span;
+  const len = span > 80 ? 20 : span > 30 ? 10 : 5, px = len * sc;
   ctx.fillStyle = "#1e1e1e";
   ctx.fillRect(S - 16 * dpr - px, S - 16 * dpr, px, 4 * dpr);
   ctx.font = `${12 * dpr}px "Segoe UI", system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.fillText(`${len} µm`, S - 16 * dpr - px / 2, S - 22 * dpr);
 }
+
+// zoom with the wheel around the pointer, drag to move, double-click to fit
+(function zoomAndPan() {
+  const canvas = $("world");
+  let drag = null;
+  const toWorld = (e) => {
+    const r = canvas.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+    return [view.cx + (fx - 0.5) * view.span, view.cy - (fy - 0.5) * view.span];
+  };
+  canvas.addEventListener("wheel", (e) => {
+    if (view.box === null) return;
+    e.preventDefault();
+    const [wx, wy] = toWorld(e), factor = e.deltaY < 0 ? 0.8 : 1.25;
+    const span = Math.min(view.box, Math.max(view.box / 16, view.span * factor));
+    const s = span / view.span;
+    view.cx = wx + (view.cx - wx) * s; view.cy = wy + (view.cy - wy) * s; view.span = span;
+    requestDraw();
+  }, { passive: false });
+  canvas.addEventListener("pointerdown", (e) => { drag = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drag || view.box === null) return;
+    const r = canvas.getBoundingClientRect(), k = view.span / r.width;
+    view.cx -= (e.clientX - drag[0]) * k; view.cy += (e.clientY - drag[1]) * k;
+    drag = [e.clientX, e.clientY];
+    requestDraw();
+  });
+  canvas.addEventListener("pointerup", () => { drag = null; });
+  canvas.addEventListener("dblclick", () => { if (frame) { fitView(frame.meta.box, frame.meta.focus); requestDraw(); } });
+})();
 
 // ------------------------------------------------------------ the counts graph
 function niceTop(v) {
@@ -313,6 +372,13 @@ $("runBtn").addEventListener("click", () => {
   send({ type: "run", on: running });
 });
 $("resetBtn").addEventListener("click", () => send({ type: "reset" }));
+$("scene").addEventListener("change", () => {
+  const sc = $("scene").value;
+  $("sceneHint").textContent = SCENE_HINTS[sc];
+  lastFocus = null;
+  send({ type: "scene", scene: sc });
+});
+$("sceneHint").textContent = SCENE_HINTS.world;
 $("recBtn").addEventListener("click", () => send({ type: "recommended" }));
 $("settingsBtn").addEventListener("click", () => { $("overlay").hidden = false; });
 $("closeBtn").addEventListener("click", () => { $("overlay").hidden = true; });

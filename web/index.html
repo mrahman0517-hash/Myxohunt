@@ -12,7 +12,7 @@
     <section class="stage">
       <div class="world-wrap" id="worldWrap">
         <canvas id="world"></canvas>
-        <div class="topbar"><span id="clock">loading…</span><span id="counts"></span>
+        <div class="topbar"><span id="clock">loading…</span><span id="counts"></span><span class="hint" id="zoomHint">wheel: zoom · drag: move · double-click: fit</span>
           <button id="settingsBtn" class="small">Settings</button></div>
         <div class="loading" id="loading"><div class="spinner"></div><p id="loadingText">Starting…</p></div>
         <div class="overlay" id="overlay" hidden>
@@ -25,6 +25,16 @@
     <aside class="panel">
       <h1>MyxoHunt</h1>
       <p class="sub">swarming, hunting and rippling of <i>Myxococcus xanthus</i>, live in your browser</p>
+      <div class="control">
+        <label>Scene</label>
+        <select id="scene" class="wide">
+          <option value="world">Predation world: colonies, hunters arriving</option>
+          <option value="attack">Colony attack: 240 hunters invade one colony</option>
+          <option value="swarm">Swarming: the paper's 65 µm box</option>
+          <option value="ripple">Rippling: the paper's box on prey remains</option>
+        </select>
+        <p class="hint" id="sceneHint"></p>
+      </div>
       <div class="control">
         <label>Speed: <b id="speedText"></b></label>
         <input type="range" id="speed" min="0" max="8" step="1" value="8">
