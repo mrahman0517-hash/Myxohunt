@@ -23,6 +23,8 @@
   "web_controller.py"
  ],
  "scenes": [
-  "attack.pkl.gz"
+  "attack.pkl.gz",
+  "ripple.pkl.gz",
+  "swarm.pkl.gz"
  ]
 }
