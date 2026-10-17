@@ -182,7 +182,13 @@ function fitView(box, focus) {
   else { view.cx = view.cy = box / 2; view.span = box; }
 }
 
+function wrapView() {
+  view.cx = ((view.cx % view.box) + view.box) % view.box;
+  view.cy = ((view.cy % view.box) + view.box) % view.box;
+}
+
 function mapper(S) {
+  wrapView();
   const { cx, cy, span, box } = view, k = S / span, h = span / 2;
   const wrap = (d) => d - box * Math.round(d / box);
   return { k, X: (x) => (wrap(x - cx) + h) * k, Y: (y) => S - (wrap(y - cy) + h) * k };
@@ -200,14 +206,15 @@ function blitImage(ctx, canvas, bytes, n, S) {
   }
 }
 
-function cellPath(nodes, i, M, half) {
+function cellPath(nodes, i, M, S) {
+  // break the line where a cell crosses the world's wrap-around edge or the view's own seam
   const p = new Path2D();
   let px = 0, py = 0;
   for (let j = 0; j < 10; j++) {
-    const x = nodes[(i * 10 + j) * 2], y = nodes[(i * 10 + j) * 2 + 1];
-    if (j === 0 || Math.abs(x - px) > half || Math.abs(y - py) > half) p.moveTo(M.X(x), M.Y(y));
-    else p.lineTo(M.X(x), M.Y(y));
-    px = x; py = y;
+    const X = M.X(nodes[(i * 10 + j) * 2]), Y = M.Y(nodes[(i * 10 + j) * 2 + 1]);
+    if (j === 0 || Math.abs(X - px) > S / 4 || Math.abs(Y - py) > S / 4) p.moveTo(X, Y);
+    else p.lineTo(X, Y);
+    px = X; py = Y;
   }
   return p;
 }
@@ -242,7 +249,7 @@ function drawWorld() {
   ctx.lineWidth = Math.max(1, sc * 1.0);
   [COL.ecoli, COL.dormant, COL.dead].forEach((c, k) => { ctx.strokeStyle = c; ctx.stroke(paths[k]); });
   const n = f.killing.length, w = Math.max(1, 0.7 * sc), cells = [];
-  for (let i = 0; i < n; i++) cells.push(cellPath(f.nodes, i, M, half));
+  for (let i = 0; i < n; i++) cells.push(cellPath(f.nodes, i, M, S));
   ctx.strokeStyle = COL.rim;
   ctx.lineWidth = w + Math.max(4, 0.8 * w);
   for (let i = 0; i < n; i++) if (f.killing[i]) ctx.stroke(cells[i]);

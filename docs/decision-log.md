@@ -2283,6 +2283,8 @@ Source: the user's design; Seef 2021; Rombouts 2023; Kearns 2001; Kearns & Shimk
   `web/` with `index.html`, `app.js`, `worker.js`, `style.css`, `build.py`); `np.intp` indices for
   `bincount`; the biology speed-up on the main panel. 86 tests pass.
 
+- **17 Oct 2026, web drawing fix (B96):** after dragging the view far, parts of the ground went blank and Myxo crossing the view's edge were drawn as long straight lines across the world. The view centre now wraps back into the world, and a cell's outline breaks wherever it jumps across the screen. Pages load `app.js?v=2` so browsers don't keep the old code.
+
 ---
 
 ## Open questions
