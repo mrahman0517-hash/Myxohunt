@@ -1,0 +1,15 @@
+# Motility Sim — Python 3.10+
+# Create the environment:
+#   python -m venv .venv
+#   source .venv/bin/activate        (Windows: .venv\Scripts\activate)
+#   pip install -r requirements.txt
+numpy>=1.26
+scipy>=1.11        # cKDTree: fast neighbour search with periodic boundaries
+matplotlib>=3.8    # validation figures (and later, the video)
+pygame>=2.5        # predation-sim: live app window and drawing video frames
+imageio>=2.34      # predation-sim: writing the .mp4
+imageio-ffmpeg>=0.5  # predation-sim: the video encoder imageio uses
+pytest>=8.0        # predation-sim: tests
+# Only for re-running the authors' code comparison (paper-reproduction, decision-log A11):
+tqdm>=4.66
+pandas>=2.0

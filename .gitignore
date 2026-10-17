@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+CLAUDE.local.md
+.pytest_cache/
+
+# kept out of git: the paper's PDF (link: doi:10.1038/s41567-026-03416-y), old archives,
+# run checkpoints, video frames (the MP4s are kept) and app screenshots/saved settings
+Resources/
+*.zip
+*.ckpt
+*.ckpt.tmp
+videos/*/frames/
+videos/screenshot_*.png
+predation-sim/settings_live.json
