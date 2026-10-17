@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 
+import myxo_alignment as align
 import myxo_body
 import myxo_modes
 import myxo_reversals as rev
@@ -265,8 +266,9 @@ def _crowd(n=1000, **overrides):
 def test_with_no_prey_food_10_percent_scout_at_once_and_about_half_get_a_turn_in_10_bio_hours():
     """At zero prey food the start rate is 0.011 per real min and spells last 10 min, so about 10% of
     cells scout at any moment and 1 − e^(−0.011 × 60) ≈ 49% get a turn within an hour of real time
-    (10 bio-h). The store doesn't matter (B83)."""
-    w = _crowd()
+    (10 bio-h). The store doesn't matter (B83). B83's rotating scouts are an option since B95
+    (random ends, no rest, no cap)."""
+    w = _crowd(scout_random_end=True, scout_rest_time=0.0, scout_max_share=1.0)
     w.myxo.energy[:] = np.linspace(5.0, 205.0, state.count(w.myxo))
     ever = np.zeros(state.count(w.myxo), dtype=bool)
     shares = []
@@ -329,3 +331,41 @@ def test_myxo_seeds_come_in_from_outside_over_the_first_10_bio_hours():
     seeding.add_due_myxo(w)
     assert 0 < early < 5 * 20 + 10
     assert state.count(w.myxo) == 5 * 20 + 10 and not w.myxo_arrivals
+
+
+def test_scouts_stay_scouts_until_prey_rest_afterwards_and_never_exceed_the_cap():
+    """B95: with no prey food, spells don't end at random, so scouts stay scouts; at most 10% of
+    cells scout; a spell ends when prey food turns up, and that cell rests before scouting again."""
+    w = _crowd()
+    for _ in range(int(60.0 / w.settings.dt)):                # 60 real minutes, no food anywhere
+        myxo_modes.update_scouts(w)
+        assert w.myxo.scout.mean() <= w.settings.scout_max_share + 1e-9
+    first = w.myxo.scout.copy()
+    assert first.mean() > 0.09                                # the cap fills up
+    for _ in range(200):
+        myxo_modes.update_scouts(w)
+    assert (w.myxo.scout[first]).all()                        # nobody gave up without prey
+    w.fields.food[:] = 50.0                                   # prey food everywhere: every spell ends
+    myxo_modes.update_scouts(w)
+    assert not w.myxo.scout.any()
+    assert myxo_modes.resting(w)[first].all()                 # and those cells must rest now
+
+
+def test_a_starving_scout_stops_scouting_unless_starving_cells_may_scout():
+    """B95: by default a scout that turns stringent stops; with stringent_scouts on it carries on."""
+    for allowed in (False, True):
+        w = _crowd(n=200, stringent_scouts=allowed)
+        w.myxo.scout[:] = True
+        w.myxo.starve_time[:] = w.settings.stringent_delay + 1.0
+        myxo_modes.update_scouts(w)
+        assert w.myxo.scout.all() == allowed
+
+
+def test_leading_cells_scouts_and_invaders_turn_toward_the_prey_smell():
+    """B95: a cell heading across a smell rising to its left turns left; with no smell nothing turns."""
+    w = _one_cell_world().world
+    heads = np.array([[20.0, 20.0]])
+    assert align.smell_turn(w, heads, np.array([0.0]))[0] == 0.0          # flat smell: no turn
+    w.fields.attractant[:] = np.arange(w.fields.attractant.shape[1])[None, :] * 1.0   # rises with y
+    turn = align.smell_turn(w, heads, np.array([0.0]))[0]                 # heading +x, smell up +y
+    assert turn > 0

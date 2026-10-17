@@ -89,16 +89,34 @@ def wedge_sums(eps, spacing, heads, theta, offsets, s, extra=None):
 
 
 # adapted from paper-reproduction/functions.py:eps_turn (split into wedge_sums + choice)
-def eps_turn(eps, spacing, heads, theta, offsets, s, rng, extra=None):
+def eps_turn(eps, spacing, heads, theta, offsets, s, rng, extra=None, with_trail=False):
     """Turn toward slime: among wedges with ≥ 80% of the best, pick the one nearest straight
     ahead; Δθ = γ · sin 2(θ_wedge − θ) · Δt. No turn if no square reaches c_min.
-    `extra`: scout slime, sensed on top of ordinary slime (B71)."""
+    `extra`: scout slime, sensed on top of ordinary slime (B71). With `with_trail`, also return
+    whether each cell senses any trail ahead (cells that don't are leading their stream, B95)."""
     if len(theta) == 0:
-        return np.zeros(0)
+        return (np.zeros(0), np.zeros(0, dtype=bool)) if with_trail else np.zeros(0)
     sums, peak = wedge_sums(eps, spacing, heads, theta, offsets, s, extra)
     width = s.view_angle / s.n_sectors
     centres = (np.arange(s.n_sectors) - s.n_sectors // 2) * width
     good = sums >= s.eps_choice_tolerance * sums.max(axis=1, keepdims=True)
     closeness = np.abs(centres)[None, :] * (1 + rng.uniform(-1e-3, 1e-3, size=sums.shape))
     chosen = centres[np.argmin(np.where(good, closeness, np.inf), axis=1)]
-    return np.where(peak >= s.eps_c_min, s.gamma_eps * np.sin(2.0 * chosen) * s.dt, 0.0)
+    on_trail = peak >= s.eps_c_min
+    turn = np.where(on_trail, s.gamma_eps * np.sin(2.0 * chosen) * s.dt, 0.0)
+    return (turn, on_trail) if with_trail else turn
+
+
+def smell_turn(world, heads, theta):
+    """Turn toward the prey smell (B95, our assumption): Δθ = smell_steer · sin(φ − θ) · Δt, where φ
+    points up the attractant at the head (central differences one coarse square apart). No turn
+    where the smell is flat, so with no prey and no remains nothing changes."""
+    s, f = world.settings, world.fields
+    if s.smell_steer <= 0 or len(theta) == 0:
+        return np.zeros(len(theta))
+    h = f.spacing
+    dx, dy = np.array([h, 0.0]), np.array([0.0, h])
+    gx = grids.sample(f.attractant, heads + dx, s.box) - grids.sample(f.attractant, heads - dx, s.box)
+    gy = grids.sample(f.attractant, heads + dy, s.box) - grids.sample(f.attractant, heads - dy, s.box)
+    flat = np.hypot(gx, gy) <= 1e-9
+    return np.where(flat, 0.0, s.smell_steer * np.sin(np.arctan2(gy, gx) - theta) * s.dt)

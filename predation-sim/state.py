@@ -83,6 +83,8 @@ class World:
     myxo_arrivals: list = field(default_factory=list)  # (bio min, cells) of Myxo seeds still to come in (B78)
     spores: np.ndarray = field(default_factory=lambda: np.zeros((0, 2)))  # where Myxo spores wait (B80)
     myxo_lysed: int = 0       # Myxo that have lysed in development so far (B80)
+    scout_rest_uids: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int64))  # cells resting
+    scout_rest_until: np.ndarray = field(default_factory=lambda: np.zeros(0))  # ... until this real time (B95)
 
 
 # ---------------------------------------------------------------- empty containers

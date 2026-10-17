@@ -2102,6 +2102,73 @@ Source: the user's choice.
 
 Source: the user's request; Pyodide (pyodide.org); our measurements.
 
+**B96. The web app gets scenes and zoom, so reversals and rippling can be seen live (the user: "the king of the project is barely observable").** *17 Oct 2026*
+- **Why:** in the predation world only 2–3 hunters kill at a time (a kill lasts 2 bio-min, about 4 s
+  on screen at ×30), the pole dots are too small to see reversals, and rippling almost never forms:
+  hunters spread along slime highways at about 0.01 cells/µm², far below the paper's rippling
+  density of 0.24. That last one is a model weakness, addressed separately by B95 (another
+  session).
+- **Scenes** (`web_controller.SCENES`):
+  - predation world (as before);
+  - colony attack: one colony grown 50 real min on full ground, then four drops of 60 Myxo at its
+    edge;
+  - swarming: the paper's 65 µm box with 370 cells;
+  - rippling: the paper's box with 1,000 cells on prey remains.
+  - The last three start from states pre-run on a PC (`web/make_scenes.py`, 30–50 real min), because
+    they'd take minutes to form in the browser. Settings pickled before a field existed load with
+    its default (`Settings.__setstate__`, B95).
+- **Zoom:** mouse wheel to zoom, drag to move, double-click to fit (wrap-around safe). The attack
+  scene opens on the colony.
+- **Build:** `python web/build.py --head` copies the core files as last committed, so another
+  session's unfinished edits don't ship.
+- **Also:** the 250 µm world video finished (`videos/world250_60h.mp4`, 60 bio-h, 4,400 E. coli and
+  1,372 Myxo at the end).
+
+Source: the user's request; Saulnier 2026 (the test boxes).
+
+**B95. Hunters reach and enter colonies: stream leaders, scouts and cells touching prey steer toward the prey smell, and scouts keep going until they find prey (the user's design).** *17 Oct 2026*
+- **Why (the user):** the lead cell should follow the food and the others its slime; scouts should
+  hunt until they find prey; hunters were only grazing colony edges, and rippling was barely visible.
+  The smell only biased reversals, so on a trail the trail always won (B63, B66).
+- **The rules** (each a setting, also in the app):
+  - **Stream leaders**, followers that sense no slime ahead, turn toward the prey smell:
+    Δθ = `smell_steer` · sin(φ − θ) · Δt, with φ pointing up the attractant at the head (default
+    3/min). Followers keep taking their slime, so a stream follows its leader.
+  - **Scouts** add the same turn to their random wandering.
+  - **Invasion on contact** (`invade_on_contact`): a cell touching a living E. coli stops following
+    slime and steers up the smell, into the colony, laying ordinary slime that others follow.
+    A-motile cells penetrate colonies and groups follow them (Seef 2021).
+  - **Scout spells** end when the scout finds prey food or starts starving (`scout_random_end` off;
+    B83's random end stays an option). Starving cells don't start scouting (`stringent_scouts` off).
+  - **Caps (the user's):** after a spell a cell rests 60 real min before it may scout again
+    (`scout_rest_time`), and at most 10% of all cells scout at once (`scout_max_share`).
+- **Backing:**
+  - **Backed:** groups follow pioneers into prey (Seef 2021); lone A-motile foragers exist and cells
+    switch between foraging and swarms (Rombouts 2023); starving cells move up the lipid attractant
+    (Kearns 2001).
+  - **Assumed:** steering. Measured Myxo chemotaxis works by biasing reversals (Kearns & Shimkets
+    1998), and long-range attraction to living prey is unproven (B32). No study shows that low food
+    or starvation triggers scouting; the spell rules and caps are ours. Speeds stay measured: scouts
+    1.1×, starving loners 1.5× (B80, B75).
+- **Test** (one colony grown alone for 10 bio-h, 470 E. coli, then four drops of 20 Myxo at its edge;
+  5 bio-h; seed 1; values every 5 real min):
+
+  | | E. coli | Rippling | Deep inside | With the colony | Myxo at the end |
+  |---|---|---|---|---|---|
+  | Old rules | 470 → 495 | 4–8 | 0–5 | 48 → 31 | 87 |
+  | B95 | 470 → 161 | 9 → 35 | up to 13 | 72 → 89 | 97 |
+
+  The hunters stay, enter and eat the colony, and rippling rises as they pack on its remains. One
+  seed; the full predation world is not yet re-run.
+- **Unchanged without prey smell:** the new turns are zero where the smell is flat, so the
+  tick-for-tick equivalence with the paper's model stays exact.
+- **Compatibility:** settings and worlds saved before B95 (checkpoints, the web scenes of B96) load
+  with the new fields at their defaults (`Settings.__setstate__`, `myxo_modes.resting`).
+- **Tests:** 89 pass (new: scouts stay until prey, rest afterwards, never exceed the cap; a
+  starving scout stops unless allowed; the smell turn points up the smell and is zero where flat).
+
+Source: the user's design; Seef 2021; Rombouts 2023; Kearns 2001; Kearns & Shimkets 1998; our test.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.

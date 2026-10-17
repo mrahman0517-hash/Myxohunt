@@ -217,6 +217,16 @@ class Settings:
     stringent_smell: float = 1.5     # ×        the same for stringent cells: the lipid attractant works only in
                                      #          starving cells (Kearns 2001); the size, as for scouts, is ours
                                      #          (B72, B80; 1 = no boost before) [assumed, direction biology]
+    scout_random_end: bool = False   #          a scouting spell ends only when the scout finds prey food (or starts
+                                     #          starving); True = also at random, every scout_episode on average (B95) [your choice]
+    scout_rest_time: float = 60.0    # real min a cell must wait after a spell before it may scout again (B95) [your choice]
+    scout_max_share: float = 0.1     #          at most this share of all Myxo scout at once (B95) [your choice]
+    stringent_scouts: bool = False   #          starving cells may scout; off = a scout that starts starving stops (B95) [your choice]
+    smell_steer: float = 3.0         # 1/min    cells leading a stream (no slime ahead), scouts, and cells touching
+                                     #          living prey turn toward the prey smell: Δθ = rate·sin(φ − θ)·Δt (B95) [assumed]
+    invade_on_contact: bool = True   #          a cell touching living prey stops following slime and steers up the
+                                     #          smell into the colony, laying slime others follow (A-motile invasion,
+                                     #          Seef 2021) (B95) [assumed]
     absorb_radius: float = 2.0       # µm       cells absorb food from the ground within this distance of
                                      #          their head (extracellular digestion) (B71) [assumed]
     start_colonies: int = 2          #         (B44); options COLONY_OPTIONS
@@ -254,6 +264,13 @@ class Settings:
         return self.scout_start_fraction * self.top_speed_food
 
     # ---- saving and loading -------------------------------------------------------------
+    def __setstate__(self, state):
+        """Unpickling: settings saved before a field existed get that field's default (B95), so
+        older checkpoints and web scenes still load."""
+        defaults = Settings()
+        self.__dict__.update({f.name: getattr(defaults, f.name) for f in fields(self)})
+        self.__dict__.update(state)
+
     def to_json(self, path):
         """Write all settings to a JSON file, so a run can be repeated or recorded later."""
         with open(path, "w", encoding="utf8") as fh:
