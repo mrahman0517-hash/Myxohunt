@@ -34,6 +34,9 @@ ECOLI_DEAD = (190, 160, 178)
 MYXO_DIM = np.array([25, 95, 40])
 MYXO_BRIGHT = np.array([70, 225, 95])
 SCOUT = (200, 235, 60)
+REVERSED = (255, 150, 40)       # orange: the cell reversed within the last REVERSAL_FLASH real min
+POLE = (255, 255, 255)          # the leading pole (where MglA sits; it moves to the other end on reversal)
+REVERSAL_FLASH = 0.25           # real min (15 s)
 SPORE_FILL, SPORE_EDGE = (205, 240, 165), (31, 157, 58)
 TEXT, BAR = (255, 255, 255), (20, 20, 20, 170)
 
@@ -131,11 +134,12 @@ def draw_ecoli(surf, world, view):
 
 def myxo_colours(world):
     """Green, brighter with a fuller store (100 = a newborn, 200 = ready to divide); scouts
-    yellow-green."""
+    yellow-green; orange for 15 s after a reversal."""
     m = world.myxo
     full = np.clip(m.energy / 200.0, 0.0, 1.0)[:, None]
     colours = (MYXO_DIM + (MYXO_BRIGHT - MYXO_DIM) * full).astype(int)
     colours[m.scout] = SCOUT
+    colours[m.age < REVERSAL_FLASH] = REVERSED
     return colours
 
 
@@ -160,8 +164,10 @@ def draw_myxo(surf, world, view):
     rim = width + max(4, int(0.8 * width))
     for i in np.nonzero(m.pause_left > 0)[0]:
         draw_chain(surf, (255, 255, 255), pts[i], rim, view)
+    pole = max(1.5, 0.8 * width)
     for i in range(len(pts)):
         draw_chain(surf, tuple(int(v) for v in colours[i]), pts[i], width, view)
+        pygame.draw.circle(surf, POLE, pts[i, 0], pole)
 
 
 def draw_spores(surf, world, view):
@@ -196,19 +202,24 @@ def draw_scale_bar(surf, view, font, y):
 
 
 LEGEND = ["magenta: E. coli (dark = dormant)    grey: slime trails    mauve: prey remains",
-          "green: M. xanthus (bright = well fed, yellow = scout, white rim = killing)"]
+          "green: M. xanthus (bright = well fed, yellow = scout, white rim = killing)",
+          "white dot: leading pole    orange: just reversed (pole switched ends)"]
 
 
-def draw_hud(surf, world, font, view, title="", legend=True):
-    """Time and counts on top; a scale bar and (for videos) a legend at the bottom."""
+def draw_hud(surf, world, font, view, title="", legend=True, counts=True):
+    """Time and counts on top (or, for the paper's test boxes, real minutes and recent reversals);
+    a scale bar and (for videos) a legend at the bottom."""
     e, m = world.ecoli, world.myxo
     alive = e.lysis_timer < 0
     n_e, n_m = int(alive.sum()), state.count(m)
     dormant = int((alive & e.dormant).sum())
     starving = int(myxo_modes.stringent(world).sum()) if n_m else 0
     killing = int((m.pause_left > 0).sum()) if n_m else 0
-    top = [f"{world.bio_t / 60:5.1f} h of biology    E. coli {n_e:,} ({dormant:,} dormant)    "
-           f"M. xanthus {n_m:,} ({killing} killing, {starving} starving)"]
+    if counts:
+        top = [f"{world.bio_t / 60:5.1f} h of biology    E. coli {n_e:,} ({dormant:,} dormant)    "
+               f"M. xanthus {n_m:,} ({killing} killing, {starving} starving)"]
+    else:
+        top = [f"{world.t:5.1f} real min    {n_m:,} cells    {int((m.age < 1.0).sum())} reversed in the last minute"]
     text_bar(surf, ([title] if title else []) + top, font, top=True)
     y0 = text_bar(surf, LEGEND, font, top=False)[0] if legend else surf.get_height()
     draw_scale_bar(surf, view, font, y0 - 18)
@@ -256,7 +267,7 @@ def draw_counts_graph(surf, rect, stats, font):
     surf.blit(font.render("cells vs h of biology", True, GRAPH_TEXT), (rect.right - 150, rect.y + 5))
 
 
-def draw_world(surf, world, font=None, view=None, title="", legend=True):
+def draw_world(surf, world, font=None, view=None, title="", legend=True, counts=True):
     """The whole picture onto `surf` (square): the whole world, or the close-up `view`."""
     view = view or View(world.settings.box, surf.get_width())
     draw_background(surf, world, view)
@@ -264,4 +275,4 @@ def draw_world(surf, world, font=None, view=None, title="", legend=True):
     draw_ecoli(surf, world, view)
     draw_myxo(surf, world, view)
     if font is not None:
-        draw_hud(surf, world, font, view, title, legend)
+        draw_hud(surf, world, font, view, title, legend, counts)

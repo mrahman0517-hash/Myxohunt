@@ -54,7 +54,7 @@ def read_args():
     """The command line."""
     p = argparse.ArgumentParser(description="Record a video of the predation simulation.")
     p.add_argument("name")
-    p.add_argument("--scene", default="world", choices=["world", "closeup"])
+    p.add_argument("--scene", default="world", choices=["world", "closeup", "swarm", "ripple"])
     p.add_argument("--grow", type=float, default=40.0, help="closeup: real minutes the colony grows first")
     p.add_argument("--group-size", type=int, default=20, help="closeup: Myxo in each of the four drops")
     p.add_argument("--minutes", type=float, default=600.0, help="real minutes to record")
@@ -72,8 +72,32 @@ def read_args():
 
 def save_frame(sim, surf, font, folder, k, scene):
     """Draw the world and save it as frame number k."""
-    drawing.draw_world(surf, sim.world, font, view=scene["view"], title=scene["title"])
+    drawing.draw_world(surf, sim.world, font, view=scene["view"], title=scene["title"],
+                       counts=scene.get("counts", True))
     pygame.image.save(surf, os.path.join(folder, f"frame_{k:05d}.jpg"))
+
+
+def paper_box(args):
+    """The paper's quick-test box (65 µm, A3): 370 cells swarming on bare ground, or 1,000 cells
+    rippling on prey remains with a horizontal ripple axis (as in tests/test_equivalence.py). No
+    prey, no scouts, no pull toward smell, slime that never fades, biology at real speed; the
+    pattern forms for --grow real minutes before recording."""
+    import seeding
+    ripple = args.scene == "ripple"
+    s = make_settings("live", box=65.0, seed=args.seed, start_colonies=0, myxo_groups=0, myxo_singles=0,
+                      eps_fade_time=float("inf"), matrix_half_life=float("inf"), chemo_strength=0.0,
+                      speedup=1.0, scout_start_rate=0.0, **parse_overrides(args.overrides, "live"))
+    sim = Simulation(s, seed_cells=False)
+    if ripple:
+        f = sim.world.fields
+        f.matrix[:], f.matrix_smooth[:], f.axis_c[:], f.axis_s[:] = 1.0, 1.0, 1.0, 0.0
+        seeding.uniform_myxo(sim.world, 1000, aligned_axis=0.0)
+    else:
+        seeding.uniform_myxo(sim.world, 370)
+    sim.run_for(real_minutes=args.grow)
+    title = ("Rippling: 1,000 M. xanthus on prey remains (axis left-right), the paper's 65 µm box" if ripple
+             else "Swarming: 370 M. xanthus on bare ground, the paper's 65 µm box")
+    return sim, dict(view=None, title=title, start=sim.world.t, counts=False)
 
 
 def save_checkpoint(path, sim, k, scene):
@@ -89,6 +113,8 @@ def new_scene(args):
     if args.scene == "world":
         settings = make_settings(args.mode, seed=args.seed, **parse_overrides(args.overrides, args.mode))
         return Simulation(settings), dict(view=None, title="", start=0.0)
+    if args.scene in ("swarm", "ripple"):
+        return paper_box(args)
     sys.path.insert(0, os.path.join(HERE, "checks"))
     from check_predation import add_attackers, colony_centre_and_radius   # the B76 invasion test's scene
     settings = make_settings("live", seed=args.seed, start_colonies=1, myxo_groups=0, myxo_singles=0,

@@ -1,4 +1,4 @@
-# Motility Sim: *Myxococcus xanthus* hunting *E. coli*
+# MyxoHunt: swarming, hunting and rippling of *Myxococcus xanthus*
 
 A 2D agent-based simulation of a bacterial predator and its prey, built on the swarming and
 rippling model of Saulnier et al. 2026, *Nature Physics* (doi:10.1038/s41567-026-03416-y).
@@ -14,9 +14,12 @@ into a famine when prey run out. Both species are individual cells at real size 
 - `videos/predation_100h.mp4`: the 150 µm live world over 100 h of biology.
 - `videos/closeup_240.mp4`: a close-up of 240 Myxo eating one E. coli colony (7.5 h).
 - `videos/closeup_invasion.mp4`: the same with 80 Myxo, too few to outpace the colony's growth.
+- `videos/swarm_reversals.mp4`, `videos/ripple_reversals.mp4`: the paper's 65 µm test box, swarming
+  (370 cells) and rippling (1,000 cells), 20 real minutes each, to see the reversals.
 
 Colours: magenta = E. coli (dark = dormant), green = M. xanthus (bright = well fed, yellow = scout,
-white rim = killing a prey), grey = slime trails, mauve = prey remains, brown = ground nutrients.
+white rim = killing a prey), white dot = a Myxo's leading pole, orange = reversed in the last 15 s,
+grey = slime trails, mauve = prey remains, brown = ground nutrients.
 
 ## Run it
 

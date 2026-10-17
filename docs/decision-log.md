@@ -2049,6 +2049,31 @@ Source: the user's call; our runs (B89).
 
 Source: the user's design; the sources named.
 
+**B92. Reversals made visible (the user: "reversal isn't explicitly visible from the video").** *17 Oct 2026*
+- **The leading pole** of every Myxo is drawn as a white dot, like MglA, which marks the leading pole
+  and moves to the other end when a cell reverses. A reversal swaps the cell's disc order
+  (`myxo_body.reverse`), so the dot jumps to the other end.
+- **Orange for 15 s after a reversal** (`drawing.REVERSAL_FLASH`), so reversals stand out in dense
+  streams.
+- **Two new close-ups at the paper's own test settings** (65 µm box, A3; no prey, no scouts, no smell,
+  slime that never fades, biology at real speed), with frames 3 s apart (20 real min in about 20 s):
+  - **swarming:** 370 cells on bare ground (`videos/swarm_reversals.mp4`);
+  - **rippling:** 1,000 cells on prey remains, ripple axis left to right (`videos/ripple_reversals.mp4`).
+  The top line counts the cells that reversed in the last minute.
+- **Why the population videos couldn't show it:** at 5–7 px/µm and 15 s between frames, a cell's
+  ends are a few pixels apart and it reverses every few frames. The wide video was already
+  recording with the old drawing, so its cells have no pole dot.
+
+Source: the user's request; Saulnier 2026 (the test boxes); MglA at the leading pole (cell biology
+reference, Part A).
+
+**B93. The project is called MyxoHunt: "swarming, hunting and rippling of M. xanthus" (the user's choice).** *17 Oct 2026*
+- **Where:** the README title, the app's window and panel; the GitHub repository will be `myxohunt`.
+- **Considered:** WolfPack (after "wolf-pack" feeding, Berleman & Kirby 2009), Swarm & Ripple, and the
+  working name Motility Sim.
+
+Source: the user's choice.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.

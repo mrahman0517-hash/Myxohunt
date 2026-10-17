@@ -102,7 +102,7 @@ class App:
 
     def __init__(self, test=False):
         pygame.init()
-        pygame.display.set_caption("Myxococcus xanthus hunting E. coli: live world")
+        pygame.display.set_caption("MyxoHunt: Myxococcus xanthus hunting E. coli (live)")
         info = pygame.display.Info()
         avail = (info.current_h if info.current_h > 0 else 1000) - 90
         self.S = int(min(max(avail - GRAPH_H, 420), 820)) if not test else 700
@@ -174,6 +174,7 @@ class App:
                 self.slider_for(self.panel, param)
         self.panel.header("Colours")
         for line in ["magenta: E. coli (dark = dormant, grey = dead)", "green: M. xanthus (bright = well fed)",
+                     "white dot: a Myxo's leading pole", "orange: reversed in the last 15 s",
                      "yellow: scouts; white rim: killing a prey", "grey: slime trails; mauve: prey remains",
                      "brown: ground nutrients (darker = richer)"]:
             self.panel.text(line)
@@ -329,7 +330,7 @@ class App:
     def draw_panel(self):
         """The right-hand panel."""
         pygame.draw.rect(self.screen, PANEL_BG, (self.S, 0, PANEL_W, self.S + GRAPH_H))
-        self.screen.blit(self.bold.render("M. xanthus hunting E. coli: live", True, TEXT), (self.S + 10, 8))
+        self.screen.blit(self.bold.render("MyxoHunt: M. xanthus hunting E. coli", True, TEXT), (self.S + 10, 8))
         self.speed.draw(self.screen, self.font)
         for button in self.buttons:
             button.draw(self.screen, self.font)

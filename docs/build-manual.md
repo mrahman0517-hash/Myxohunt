@@ -551,7 +551,7 @@ Built 17 Oct 2026 (B90).
 | `grid_surface(rgb, alpha=None)` | A map (x first, y up) as a pygame Surface, flipped for the screen, optionally with per-pixel alpha |
 | `draw_background(surf, world, view)` | Nutrients (cream = empty → light brown = rich), the matrix as a mauve tint (strength = matrix / ripple threshold), then slime (grey, alpha ∝ slime/0.5); each map smooth-scaled to the canvas |
 | `draw_ecoli(surf, world, view)` | Each rod as a thick line with round ends, 1 µm wide in pixels (at least 1 px): magenta, dormant darker, dead-intact grey-pink |
-| `draw_myxo(surf, world, view)` | Each cell as a polyline through its discs, 0.7 µm wide: green, brighter with the store (store/200); scouts yellow-green; cells in a killing pause with a white rim |
+| `draw_myxo(surf, world, view)` | Each cell as a polyline through its discs, 0.7 µm wide: green, brighter with the store (store/200); scouts yellow-green; orange for `REVERSAL_FLASH` (0.25 real min) after a reversal; cells in a killing pause with a white rim; a white dot on the leading pole (disc 0) (B92) |
 | `crosses_edge(a, b, view)` | Segments longer than half the box in pixels (where a cell crosses the wrap-around edge) are skipped |
 | `draw_spores(surf, world, view)` | Pale green dots, 1.5 µm across |
 | `draw_hud(surf, world, font, view, title)` | Top bar: (optional title,) biological time, E. coli (dormant), Myxo (killing, starving). Bottom bar: a two-line legend; a scale bar (20, 10 or 5 µm) |
@@ -625,8 +625,11 @@ Built 17 Oct 2026 (B90). As built:
   [--encode-only] [setting=value ...]`.
 - **Scenes:**
   - `world`: the live world from the start;
-  - `closeup`: one colony grown alone for `--grow` real minutes, then four drops of 20 Myxo at its
-    edge (`checks/check_penetration.grown_colony`), drawn with a `View` zoomed in on the colony.
+  - `closeup`: one colony grown alone for `--grow` real minutes, then four drops of `--group-size`
+    Myxo at its edge (`checks/check_predation.add_attackers`), drawn with a `View` zoomed in on the colony;
+  - `swarm`, `ripple` (B92): the paper's 65 µm test box with 370 cells on bare ground, or 1,000 on
+    prey remains with a horizontal axis; the pattern forms for `--grow` real minutes first; the top
+    line counts reversals in the last minute.
 - **Robust to stops:** each frame is saved as `../videos/NAME/frames/frame_#####.jpg`, with a
   checkpoint every `--save-every` real minutes. Starting the same command again carries on, and
   `--encode-only` joins the frames saved so far into `../videos/NAME.mp4` (imageio, libx264).
