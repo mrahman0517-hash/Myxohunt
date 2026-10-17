@@ -2074,6 +2074,34 @@ reference, Part A).
 
 Source: the user's choice.
 
+**B94. MyxoHunt runs live in the browser, with all its sliders, as a static site Vercel can host (the user: "I want the live sim to be run on the app, with sliders").** *17 Oct 2026*
+- **How:** Vercel only serves files and short requests, so the simulation runs in the visitor's
+  browser.
+  - **Pyodide:** Python compiled for the browser, with numpy and scipy; it runs the same engine as
+    the desktop app, unchanged.
+  - **The page** (`web/`): a background thread (`worker.js`) steps the world and sends frames, and the
+    page (`app.js`) draws the world, the counts graph and the controls.
+  - **The controls** come from the same catalogue (`app_params.py`) through
+    `predation-sim/web_controller.py`: main settings, Settings panel, switches, evidence options
+    with the recommended starred, fixed values.
+  - `python web/build.py` copies the 21 simulation files the page needs into `web/py/`.
+- **A browser-only fix:** the browser's Python is 32-bit, and `np.bincount` there refuses 64-bit
+  indices. Three call sites now cast to the platform's index type (`contacts`, `myxo_alignment`,
+  `myxo_energy`). On a PC nothing changes: 86 tests pass, the equivalence tests are still exact.
+- **Speed, measured:**
+  - about 27 ms of computing per 0.3 s step in the browser, against about 10–18 ms natively, so
+    about ×8–10 real time at most;
+  - the fixed part is the paper's 50 spring passes per step (`relax_springs`), which stay as
+    validated;
+  - so the biology speed-up moved to the main panel (default ×10; ×30 grows colonies 3× faster on
+    screen).
+- **Limits:** the first visit downloads about 25 MB (Python, numpy, scipy); no video recording in the
+  browser; more cells make it slower.
+- **Deploying:** import the GitHub repo in Vercel with the root directory `web` (framework "Other",
+  no build command). Every push redeploys it.
+
+Source: the user's request; Pyodide (pyodide.org); our measurements.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
@@ -2183,6 +2211,10 @@ Source: the user's choice.
   the recommended settings); `app_live.py` rebuilt (speed from real time, graph below the world,
   Settings panel, scrolling); `ui_widgets.Toggle`, a star on recommended options;
   `drawing.draw_counts_graph`; `run_record.py` reads true/false settings.
+- **B92–B94, 17 Oct 2026:** leading-pole dots and reversal flashes (`drawing`); `swarm` and `ripple`
+  scenes (`run_record`); the name MyxoHunt; the browser version (`predation-sim/web_controller.py`,
+  `web/` with `index.html`, `app.js`, `worker.js`, `style.css`, `build.py`); `np.intp` indices for
+  `bincount`; the biology speed-up on the main panel. 86 tests pass.
 
 ---
 

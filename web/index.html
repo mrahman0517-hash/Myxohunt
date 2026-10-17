@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MyxoHunt</title>
+  <meta name="description" content="A live simulation of Myxococcus xanthus swarming, hunting E. coli and rippling, running in your browser.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="layout">
+    <section class="stage">
+      <div class="world-wrap" id="worldWrap">
+        <canvas id="world"></canvas>
+        <div class="topbar"><span id="clock">loading…</span><span id="counts"></span>
+          <button id="settingsBtn" class="small">Settings</button></div>
+        <div class="loading" id="loading"><div class="spinner"></div><p id="loadingText">Starting…</p></div>
+        <div class="overlay" id="overlay" hidden>
+          <div class="overlay-head"><h2>Settings</h2><button id="closeBtn" class="small">Close</button></div>
+          <div class="overlay-body" id="overlayBody"></div>
+        </div>
+      </div>
+      <canvas id="graph"></canvas>
+    </section>
+    <aside class="panel">
+      <h1>MyxoHunt</h1>
+      <p class="sub">swarming, hunting and rippling of <i>Myxococcus xanthus</i>, live in your browser</p>
+      <div class="control">
+        <label>Speed: <b id="speedText"></b></label>
+        <input type="range" id="speed" min="0" max="8" step="1" value="8">
+      </div>
+      <div class="buttons">
+        <button id="runBtn">Pause</button>
+        <button id="resetBtn">New world</button>
+        <button id="recBtn">Recommended</button>
+      </div>
+      <p class="status" id="status"></p>
+      <h3>Main settings <span class="hint">change the running world</span></h3>
+      <div id="mainLive"></div>
+      <h3>Next world <span class="hint">apply with New world</span></h3>
+      <div id="mainReset"></div>
+      <h3>Colours</h3>
+      <ul class="key">
+        <li><span class="sw" style="background:#e63ca0"></span>E. coli <span class="dim">(dark: dormant, grey: dead)</span></li>
+        <li><span class="sw" style="background:#46e15f"></span>M. xanthus <span class="dim">(brighter: better fed)</span></li>
+        <li><span class="sw dot"></span>leading pole; <span class="sw" style="background:#ff9628"></span>just reversed</li>
+        <li><span class="sw" style="background:#c8eb3c"></span>scout; <span class="sw ring"></span>killing a prey</li>
+        <li><span class="sw" style="background:#5f5f5f"></span>slime; <span class="sw" style="background:#c496d6"></span>prey remains; <span class="sw" style="background:#e2a85c"></span>nutrients</li>
+      </ul>
+      <p class="foot">Biology runs 10× faster than movement (cells glide at their real 4 µm/min).
+        Code, docs and videos: <a href="https://github.com/mrahman0517-hash/Myxohunt" target="_blank" rel="noopener">GitHub</a>.</p>
+    </aside>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

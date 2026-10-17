@@ -75,7 +75,7 @@ def share_food(grid, demand, flat):
     0 and 1: no one can take more than a square holds (B73).
     """
     food = np.maximum(grid.ravel(), 0.0)
-    asked = np.bincount(flat.ravel(), weights=demand.ravel(), minlength=food.size)
+    asked = np.bincount(flat.ravel().astype(np.intp), weights=demand.ravel(), minlength=food.size)   # intp: browsers
     scale = np.where(asked > food, food / np.maximum(asked, 1e-300), 1.0)
     return demand * scale[flat]
 

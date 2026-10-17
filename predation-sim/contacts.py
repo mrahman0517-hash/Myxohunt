@@ -78,6 +78,7 @@ def push_amounts(points, pairs, diam, kind, box, s):
     push = np.where(r < D, (D - r) ** 2 / np.maximum(r - 0.9 * D, 2.0 / s.k_rep) * s.dt, 0.0)
     step = d / r[:, None] * push[:, None]
     wa, wb = push_shares(kind, a, b, s)
+    a, b = a.astype(np.intp), b.astype(np.intp)       # bincount needs the platform's index type (32-bit in browsers)
     for axis in range(2):
         disp[:, axis] += np.bincount(a, weights=step[:, axis] * wa, minlength=len(points))
         disp[:, axis] -= np.bincount(b, weights=step[:, axis] * wb, minlength=len(points))

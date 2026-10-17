@@ -34,6 +34,16 @@ python run_record.py close --scene closeup --grow 60 --group-size 60 --minutes 4
 python -m pytest tests            # 86 tests
 ```
 
+## In the browser
+
+`web/` runs the same simulation live in the browser (Pyodide: Python with numpy and scipy compiled
+for the web), with the same sliders, switches, evidence options and graph. It's a static site: on
+Vercel, import this repository with **Root Directory `web`** (framework "Other", no build
+command). After changing the simulation, run `python web/build.py` to refresh `web/py/`. To try
+it locally: `python -m http.server 8765 --directory web`, then open http://localhost:8765. The
+first visit downloads about 25 MB; it runs at up to about ×10 real time (raise the biology speed-up
+to see colonies grow faster).
+
 ## The live app
 
 The world runs as you watch, from real time (×1) up to as fast as the computer can. Cell counts

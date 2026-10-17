@@ -83,7 +83,7 @@ def wedge_sums(eps, spacing, heads, theta, offsets, s, extra=None):
     sector = table[hbin]
     ahead = sector >= 0
     rows = np.broadcast_to(np.arange(N)[:, None], sector.shape)
-    sums = np.bincount((rows * s.n_sectors + sector)[ahead], weights=vals[ahead],
+    sums = np.bincount((rows * s.n_sectors + sector)[ahead].astype(np.intp), weights=vals[ahead],
                        minlength=N * s.n_sectors).reshape(N, s.n_sectors)
     return sums, np.where(ahead, vals, 0.0).max(axis=1)
 

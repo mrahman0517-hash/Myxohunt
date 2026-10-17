@@ -54,6 +54,7 @@ class Param:
 
 
 MAIN = [
+    Param("speedup", "Biology speed-up (vs movement)", 1, 30, 1, backing="B4", fmt="×{:g}"),
     Param("efficiency", "Myxo keep of eaten food", 0.05, 0.6, 0.05, backing="measured 5–60%", fmt="{:.0%}",
           changes=lambda v, s: efficiency_changes(v)),
     Param("refill", "Ground refill speed", 1, 40, 1, backing="tuned", fmt="÷{:g}",
@@ -110,7 +111,6 @@ ADVANCED = [
     Param("patch_size", "Rich/poor patch size", 10, 80, 5, when="reset", backing="tuned", fmt="{:g} µm"),
     Param("box", "World size (cost grows with area)", 100, 300, 10, when="reset", backing="technical",
           fmt="{:g} µm"),
-    Param("speedup", "Biology speed-up", 1, 30, 1, backing="B4 (the user)", fmt="×{:g}"),
     Param("grid_every", "Ground maps update every", 1, 50, 1, backing="technical", fmt="{:g} ticks"),
 ]
 
