@@ -43,7 +43,7 @@ def add_attackers(world, groups=4, size=20):
     for k in range(groups):
         a = 2 * np.pi * k / groups
         spot = centre + (radius + 4.0) * np.array([np.cos(a), np.sin(a)])
-        state.append_rows(world.myxo, seeding.myxo_group(world, spot, size))
+        seeding.add_myxo(world, seeding.myxo_group(world, spot, size))
 
 
 class TouchTracker:

@@ -352,13 +352,30 @@ def test_scouts_stay_scouts_until_prey_rest_afterwards_and_never_exceed_the_cap(
 
 
 def test_a_starving_scout_stops_scouting_unless_starving_cells_may_scout():
-    """B95: by default a scout that turns stringent stops; with stringent_scouts on it carries on."""
+    """B95, B97: a scout keeps scouting through the first starving hours (stringent from 30 bio-min);
+    with stringent_scouts off it stops once it has starved for behaviour_delay (2 bio-h); with it on
+    (the default since B97) it carries on."""
     for allowed in (False, True):
         w = _crowd(n=200, stringent_scouts=allowed)
         w.myxo.scout[:] = True
         w.myxo.starve_time[:] = w.settings.stringent_delay + 1.0
         myxo_modes.update_scouts(w)
+        assert w.myxo.scout.all()                             # stringent, but not yet starving 2 bio-h
+        w.myxo.starve_time[:] = w.settings.behaviour_delay + 1.0
+        myxo_modes.update_scouts(w)
         assert w.myxo.scout.all() == allowed
+
+
+def test_cells_in_their_first_starving_hours_may_start_scouting():
+    """B97: a cell that has starved past stringent_delay but not yet behaviour_delay may still start
+    a spell; one starved longer may not, when stringent_scouts is off."""
+    for starved, expect_some in ((30.0 + 1.0, True), (120.0 + 1.0, False)):
+        w = _crowd(n=400, stringent_scouts=False)
+        w.settings.scout_start_rate = 5.0                     # high, so starts are near certain if allowed
+        w.myxo.starve_time[:] = starved
+        for _ in range(20):
+            myxo_modes.update_scouts(w)
+        assert w.myxo.scout.any() == expect_some
 
 
 def test_leading_cells_scouts_and_invaders_turn_toward_the_prey_smell():

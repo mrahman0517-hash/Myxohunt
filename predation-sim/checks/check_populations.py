@@ -6,8 +6,11 @@ Usage (from predation-sim/):  python checks/check_populations.py [real_minutes] 
 Writes checks/output/<name>.png (snapshots + population curves) and <name>_stats.csv.
 Extra setting=value pairs change settings for variant runs, e.g. nutrient_per_um=6.
 Every 30 real minutes the stats so far and a checkpoint (<name>.ckpt) are saved; starting the
-same command again after a stop carries on from the checkpoint.
+same command again after a stop carries on from the checkpoint. A restart with a different seed
+or different settings is refused, so a checkpoint can't silently mislabel a new run (B97).
 """
+import dataclasses
+import math
 import os
 import pickle
 import sys
@@ -64,14 +67,51 @@ def curves(ax, stats, energy_cap):
     twin.set_ylim(0, energy_cap); twin.set_ylabel("mean Myxo store (dashed; 100 = a newborn)")
 
 
+TRUE, FALSE = ("true", "1", "yes", "on"), ("false", "0", "no", "off")
+
+
+def parse_value(kind, value):
+    """One setting's value from text, as that setting's own type. True/false settings accept
+    true/false, 1/0, yes/no or on/off; bool('False') would be True, which mislabelled off-switches
+    before (B97)."""
+    if kind is bool:
+        word = value.strip().lower()
+        if word not in TRUE + FALSE:
+            raise ValueError(f"not a true/false value: {value!r}")
+        return word in TRUE
+    return kind(float(value)) if kind in (int, float) else kind(value)
+
+
 def parse_overrides(args):
     """Turn 'name=value' arguments into settings changes, each converted to that setting's own type."""
     defaults = make_settings("live")
     out = {}
     for arg in args:
         name, value = arg.split("=", 1)
-        kind = type(getattr(defaults, name))
-        out[name] = kind(float(value)) if kind in (int, float) else kind(value)
+        out[name] = parse_value(type(getattr(defaults, name)), value)
+    return out
+
+
+def same_value(a, b):
+    """True if two setting values are equal (floats to rounding)."""
+    if isinstance(a, float) or isinstance(b, float):
+        return math.isclose(float(a), float(b), rel_tol=1e-9, abs_tol=1e-12)
+    return a == b
+
+
+def mismatches(settings, seed, overrides):
+    """Every setting where a checkpoint differs from what this command asks for (the defaults plus
+    its seed and overrides, so a left-out override counts too): [(name, asked, found)]."""
+    asked = make_settings("live", seed=seed, **overrides)
+    out = []
+    for f in dataclasses.fields(asked):
+        a, b = getattr(asked, f.name), getattr(settings, f.name, None)
+        if isinstance(a, (int, float, bool)) and isinstance(b, (int, float, bool)):
+            differ = not same_value(a, b)
+        else:
+            differ = a != b
+        if differ:
+            out.append((f.name, a, b))
     return out
 
 
@@ -87,10 +127,26 @@ def status(world, t0):
 
 def save_progress(base, sim, snaps):
     """Write the stats so far and a checkpoint of the whole run, so a run that gets stopped keeps
-    its data and can carry on from here."""
-    sim.stats.to_csv(base + "_stats.csv")
-    with open(base + ".ckpt", "wb") as fh:
+    its data and can carry on from here. Each file is written to a temporary name first and then
+    swapped in, so a stop in mid-write can't leave a broken checkpoint (B97)."""
+    sim.stats.to_csv(base + "_stats.csv.tmp")
+    swap_in(base + "_stats.csv")
+    with open(base + ".ckpt.tmp", "wb") as fh:
         pickle.dump((sim, snaps), fh)
+    swap_in(base + ".ckpt")
+
+
+def swap_in(path, tries=20):
+    """Replace `path` with `path`.tmp. On Windows this fails while another program has the file
+    open (a viewer, a plotting script), so it retries for a while, then keeps the .tmp and carries
+    on rather than stopping the run; the next save tries again."""
+    for _ in range(tries):
+        try:
+            os.replace(path + ".tmp", path)
+            return
+        except PermissionError:
+            time.sleep(1.0)
+    print(f"could not replace {path} (open elsewhere?); the new version is in {path}.tmp", flush=True)
 
 
 def load_progress(base):
@@ -129,6 +185,10 @@ def main():
     resumed = load_progress(base)
     if resumed:
         sim, snaps = resumed
+        wrong = mismatches(sim.world.settings, seed, overrides)
+        if wrong:
+            sys.exit(f"{name}.ckpt was made with other settings ({wrong}): choose a new name, or delete "
+                     f"the checkpoint to start again")
         print(f"carrying on from the checkpoint at {sim.world.t:.1f} real min", flush=True)
     else:
         sim, snaps = Simulation(make_settings("live", seed=seed, **overrides)), []

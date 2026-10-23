@@ -8,6 +8,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 import colonies
+import counters
 import geometry as geo
 import myxo_alignment as align
 import myxo_modes
@@ -32,13 +33,20 @@ def myxo_rods(world):
 
 
 def snapshot(world):
-    """A one-line summary of the world right now, as a dict."""
+    """A one-line summary of the world right now, as a dict, followed by the running totals of
+    events so far (counters.py)."""
     e, m = world.ecoli, world.myxo
     alive = e.lysis_timer < 0
     return dict(
+        **now(world, e, m, alive), ecoli_persisters=int((alive & e.persister).sum()), **counters.totals(world))
+
+
+def now(world, e, m, alive):
+    """The state of the world at this moment (the columns every run has had)."""
+    return dict(
         t=world.t, bio_t=world.bio_t, ecoli=int(alive.sum()), ecoli_dormant=int((alive & e.dormant).sum()),
         ecoli_dead_intact=int((~alive).sum()), colonies=len(colonies.living_colonies(world)),
-        myxo=state.count(m), myxo_energy=float(m.energy.mean()) if state.count(m) else float("nan"),
+        myxo=state.count(m), myxo_store=float(m.energy.sum()), myxo_energy=float(m.energy.mean()) if state.count(m) else float("nan"),
         myxo_paused=int((m.pause_left > 0).sum()), myxo_scouts=int(m.scout.sum()),
         myxo_rippling=int(align.ripple_mask(world, m.nodes[:, 0]).sum()) if state.count(m) else 0,
         myxo_at_prey=myxo_at_prey(world),
@@ -68,7 +76,8 @@ class StatsLog:
         """Save all rows as a CSV file."""
         if not self.rows:
             return
+        names = list(dict.fromkeys(k for row in self.rows for k in row))   # rows from before a new column get blanks
         with open(path, "w", newline="", encoding="utf8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=list(self.rows[0]))
+            writer = csv.DictWriter(fh, fieldnames=names, restval="")
             writer.writeheader()
             writer.writerows(self.rows)

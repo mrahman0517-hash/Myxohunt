@@ -14,6 +14,7 @@ points on the ground; they don't germinate yet.
 """
 import numpy as np
 
+import counters
 import grids
 import state
 
@@ -41,14 +42,20 @@ def lyse(world, rows):
     matrix."""
     m, s = world.myxo, world.settings
     centres = np.mod(m.nodes[rows].mean(axis=1), s.box)
-    grids.deposit(world.fields.scraps, centres, np.maximum(m.energy[rows], 0.0), s.box)
+    spilled = np.maximum(m.energy[rows], 0.0)
+    grids.deposit(world.fields.scraps, centres, spilled, s.box)
     world.myxo_lysed += len(rows)
+    counters.add(world, "famine_lysed", len(rows))
+    counters.add(world, "scraps_spilled", spilled.sum())
+    counters.add(world, "store_lysed", m.energy[rows].sum())
 
 
 def sporulate(world, rows):
     """The cells become spores: kept as points on the ground, out of the moving population."""
     m, s = world.myxo, world.settings
     world.spores = np.concatenate([world.spores, np.mod(m.nodes[rows].mean(axis=1), s.box)])
+    counters.add(world, "famine_spores", len(rows))
+    counters.add(world, "store_spored", m.energy[rows].sum())       # carried off into the spore
 
 
 def famine_exit(world, dt_bio):
@@ -63,4 +70,5 @@ def famine_exit(world, dt_bio):
     fate = draw_fates(world, due.size)
     lyse(world, due[fate == LYSE])
     sporulate(world, due[fate == SPORE])
+    counters.add(world, "famine_rods", int((fate == ROD).sum()))
     state.keep_rows(m, ~np.isin(np.arange(state.count(m)), due[fate != ROD]))

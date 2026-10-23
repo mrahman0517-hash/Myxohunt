@@ -139,7 +139,7 @@ Details and links are in `sources.md`.
 | `seed` | 1 | Technical | Repeatable runs |
 | `dt` | 0.005 min (0.3 s) | Code | A7 |
 | `grid_every` | 20 ticks | Technical | B51 |
-| `speedup` | 10× | Your choice | B4; slow biology only, movement stays real |
+| `speedup` | 10× | Your choice | B4; slow biology only, movement stays real. Locked in the apps (B97): slime and scout timers run on the real clock, so another value changes the balance |
 | `coarse_grid` | 1 µm | Technical | B35 |
 | `eps_grid` | 0.3 µm | Code | B35 |
 
@@ -199,7 +199,7 @@ Details and links are in `sources.md`.
 | `nutrient_per_um` | 0.5 | Tuned | B78 |
 | `ecoli_mobility` | 1 | Tuned | |
 | `dormant_threshold` | 0.01 | Assumed | Below it a growing cell goes dormant |
-| `wake_threshold` | 0.2 | Your choice | B87; a real meal wakes a dormant cell and restarts its starvation clock (the Monod half-speed level); a trace no longer does |
+| `wake_threshold` | 0.2 | Your choice | B87; a real meal wakes a dormant cell and restarts its starvation clock; a trace no longer does. A chosen level: the Monod half-speed level is 0.14, not 0.2 (B97) |
 | `dormancy_before_death` | 0 (none) | Measured | B34, B87; viability falls from the start of starvation (Schink et al.); 24 bio-h before |
 | `starvation_death_rate` | 0.69 per bio-day | Measured | B34, B80; viability falls to 0.1% in 10 days (Schink et al.) |
 | `persister_fraction` | 5% | Measured | Finkel 2006: 1–10% survive long-term. Each newborn draws its own chance; daughters don't inherit it (B88; inherited before, so one colony in 20 never starved) |
@@ -278,6 +278,10 @@ Details and links are in `sources.md`.
 | `scout_speed` | 1.1× | Measured | B71, B80; lone cells glide at 4.4 µm/min (Spormann & Kaiser 1999), against the paper's 4 |
 | `scout_slime`, `scout_slime_fade` | 2×, 2× | Assumed | B71 |
 | `scout_smell` | 1.5× | Assumed | B72; starving cells follow the lipid smell (Kearns 2001), no study singles out scouts |
+| `scout_random_end` | off | Your choice | B95; a spell ends when the scout finds prey food (or has starved 2 bio-h), not at random |
+| `scout_rest_time`, `scout_max_share` | 60 real min, 10% | Your choice | B95; rest after a spell, and at most 10% of cells scout at once |
+| `stringent_scouts` | on | Your choice | B97: starving cells may scout (6–7% scouts, kills ×3–4 in branch tests). Off = cells that have starved for `behaviour_delay` (2 bio-h) stop and don't start scouting (~1%). In B95 it was off with the block at `stringent_delay` (30 bio-min), which switched scouting off (review C3) |
+| `smell_steer`, `invade_on_contact` | 3/min, on | Assumed | B95; stream leaders, scouts and cells touching prey turn up the prey smell |
 | `stringent_smell` | 1.5× | Direction backed | B80; the lipid attractant works only in starving cells (Kearns 2001); the size is ours |
 | `absorb_radius` | 2 µm | Assumed | B71; extracellular digestion is backed, the reach isn't |
 

@@ -127,12 +127,11 @@ class Controller:
         if self.attacked or w.t < ATTACK_GROW:
             return
         import seeding
-        import state
         centre, radius = colony_centre_and_radius(w)
         for k in range(ATTACK_DROPS):
             a = 2 * np.pi * k / ATTACK_DROPS
             spot = centre + (radius + 4.0) * np.array([np.cos(a), np.sin(a)])
-            state.append_rows(w.myxo, seeding.myxo_group(w, spot, ATTACK_SIZE))
+            seeding.add_myxo(w, seeding.myxo_group(w, spot, ATTACK_SIZE))
         self.focus = [float(centre[0]), float(centre[1]), 2 * radius + 24]
         self.attacked = True
 

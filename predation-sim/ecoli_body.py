@@ -4,6 +4,7 @@ how they lengthen and how they divide (B5, B52). E. coli don't glide; they only 
 """
 import numpy as np
 
+import counters
 import geometry as geo
 import seeding
 import state
@@ -88,3 +89,4 @@ def divide(world):
     e.speed_factor[idx] = seeding.speed_factors(world, idx.size)
     e.persister[idx] = seeding.persister_flags(world, idx.size)
     state.append_rows(e, second)
+    counters.add(world, "ecoli_divisions", idx.size)

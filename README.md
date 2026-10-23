@@ -41,8 +41,8 @@ for the web), with the same sliders, switches, evidence options and graph. It's 
 Vercel, import this repository with **Root Directory `web`** (framework "Other", no build
 command). After changing the simulation, run `python web/build.py` to refresh `web/py/`. To try
 it locally: `python -m http.server 8765 --directory web`, then open http://localhost:8765. The
-first visit downloads about 25 MB; it runs at up to about ×10 real time (raise the biology speed-up
-to see colonies grow faster).
+first visit downloads about 25 MB; it runs at up to about ×10 real time. Biology runs 10× faster
+than gliding; that speed-up is locked, because changing it would change the balance (B97).
 
 ## The live app
 

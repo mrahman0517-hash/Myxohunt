@@ -12,6 +12,7 @@ and 210 fills at a third of that and is used first when food runs short (it's si
 """
 import numpy as np
 
+import counters
 import grids
 import myxo_body
 import myxo_modes
@@ -37,7 +38,9 @@ def upkeep(world, dt_bio):
     s, m = world.settings, world.myxo
     full = s.energy_newborn / s.survive_time
     starving = starving_cost(m.energy, dt_bio, full, full * s.starvation_upkeep, s.energy_newborn)
-    m.energy -= np.where(myxo_modes.stringent(world), starving, full * dt_bio)
+    spent = np.where(myxo_modes.stringent(world), starving, full * dt_bio)
+    m.energy -= spent
+    counters.add(world, "store_upkeep", spent.sum())
 
 
 # ---------------------------------------------------------------- eating
@@ -107,10 +110,11 @@ def absorb_scraps(energy, taken, s):
     return energy + used * s.efficiency, taken - used
 
 
-def eat_from(world, grid, dt_bio, absorb_fn, eaters):
+def eat_from(world, grid, dt_bio, absorb_fn, eaters, name="food"):
     """The cells in `eaters` eat from one food map; anything they can't store goes back to the
-    squares it came from (B26)."""
+    squares it came from (B26). `name` ("food" or "scraps") labels the totals in the counters."""
     m = world.myxo
+    grid_before, store_before = grid.sum(), m.energy.sum()
     demand, flat = food_demand(world, grid, dt_bio)
     demand *= eaters[:, None]
     taken = share_food(grid, demand, flat)                 # (N, K)
@@ -120,6 +124,8 @@ def eat_from(world, grid, dt_bio, absorb_fn, eaters):
     food = grid.ravel()                                    # a view: changes write into the map
     np.add.at(food, flat.ravel(), (back - taken).ravel())
     np.clip(grid, 0.0, None, out=grid)
+    counters.add(world, name + "_eaten", grid_before - grid.sum())
+    counters.add(world, "store_from_" + name, m.energy.sum() - store_before)
 
 
 def uptake(world, dt_bio):
@@ -129,7 +135,7 @@ def uptake(world, dt_bio):
     if state.count(m) == 0:
         return
     eat_from(world, f.food, dt_bio, absorb, np.ones(state.count(m), dtype=bool))
-    eat_from(world, f.scraps, dt_bio, absorb_scraps, m.energy < s.scrap_cap)
+    eat_from(world, f.scraps, dt_bio, absorb_scraps, m.energy < s.scrap_cap, name="scraps")
 
 
 # ---------------------------------------------------------------- division
@@ -167,6 +173,7 @@ def divide_myxo(world, dt_bio):
     born = daughters_of(world, idx)
     m.energy[idx] = m.energy[idx] / 2.0
     state.append_rows(m, born)
+    counters.add(world, "myxo_divisions", idx.size)
 
 
 # ---------------------------------------------------------------- death
@@ -176,4 +183,6 @@ def starvation_deaths_myxo(world):
     m = world.myxo
     dead = m.energy <= 0
     if dead.any():
+        counters.add(world, "myxo_starved_dead", int(dead.sum()))
+        counters.add(world, "store_dead", m.energy[dead].sum())      # 0 or a sliver below
         state.keep_rows(m, ~dead)

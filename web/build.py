@@ -16,7 +16,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, "..", "predation-sim")
 OUT = os.path.join(HERE, "py")
-FILES = ["app_params.py", "colonies.py", "contacts.py", "ecoli_body.py", "ecoli_life.py", "engine.py",
+FILES = ["app_params.py", "colonies.py", "contacts.py", "counters.py", "ecoli_body.py", "ecoli_life.py", "engine.py",
          "fields_update.py", "geometry.py", "grids.py", "myxo_alignment.py", "myxo_body.py", "myxo_energy.py",
          "myxo_famine.py", "myxo_modes.py", "myxo_reversals.py", "predation.py", "seeding.py", "settings.py",
          "state.py", "stats.py", "web_controller.py"]

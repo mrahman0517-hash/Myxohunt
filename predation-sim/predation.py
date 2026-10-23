@@ -7,6 +7,7 @@ The pause remembers its target by the E. coli's permanent ID, because rows shift
 """
 import numpy as np
 
+import counters
 import ecoli_body
 import ecoli_life
 import grids
@@ -44,6 +45,7 @@ def start_pauses(world, touches, just_ended):
     if len(touches) == 0:
         return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
     alive_prey = e.lysis_timer[touches[:, 1]] < 0
+    counters.add(world, "touch_ticks", len(np.unique(touches[alive_prey, 0])))   # Myxo touching living prey
     free = (m.pause_left[touches[:, 0]] <= 0) & ~just_ended[touches[:, 0]]
     candidates = touches[alive_prey & free]
     rows, first = np.unique(candidates[:, 0], return_index=True)     # one target per Myxo
@@ -52,6 +54,7 @@ def start_pauses(world, touches, just_ended):
     rows, targets = rows[starts], e.uid[candidates[first[starts], 1]]
     m.pause_left[rows] = s.kill_delay / k
     m.pause_target[rows] = targets
+    counters.add(world, "pauses", len(rows))
     return rows, targets
 
 
@@ -82,7 +85,8 @@ def finish_kills(world, ended):
     killed_uids = e.uid[victims].copy()
     spill = np.ones(state.count(e))
     spill[victims] = killer_eats(world, eaters, victims)
-    lyse_ecoli(world, dead, spill)
+    lyse_ecoli(world, dead, spill, cause="kill")
+    counters.add(world, "ecoli_killed", len(victims))
     return m.uid[eaters], killed_uids
 
 
@@ -92,8 +96,12 @@ def killer_eats(world, eaters, victims):
     m, e, s = world.myxo, world.ecoli, world.settings
     contents = s.ecoli_content * (e.length[victims] / 3.0) * ecoli_life.content_fraction(e, s)[victims]
     offered = s.killer_share * contents
+    before = m.energy[eaters].sum()
     m.energy[eaters], leftover = myxo_energy.absorb(m.energy[eaters], offered, s)
     eaten = offered - leftover
+    counters.add(world, "kill_content", contents.sum())
+    counters.add(world, "food_eaten_killer", eaten.sum())
+    counters.add(world, "store_from_kills", m.energy[eaters].sum() - before)
     return np.where(contents > 0, 1.0 - eaten / np.maximum(contents, 1e-12), 1.0)
 
 
@@ -123,10 +131,10 @@ def lysis_deposits(world, dead, spill):
             np.repeat(np.cos(2 * theta), k), np.repeat(np.sin(2 * theta), k))
 
 
-def lyse_ecoli(world, dead, spill=None):
+def lyse_ecoli(world, dead, spill=None, cause="starved"):
     """Burst the rods marked `dead`: spill their food (minus any the killer ate) and attractant,
     leave their wall as matrix tagged with their colony's ripple direction, and remove them
-    (B17, B38, B45, B65)."""
+    (B17, B38, B45, B65). `cause` ("kill" or "starved") only labels the food in the counters."""
     dead = np.asarray(dead, dtype=bool)
     if not dead.any():
         return
@@ -134,6 +142,8 @@ def lyse_ecoli(world, dead, spill=None):
     f, box = world.fields, world.settings.box
     pts, food, attract, matrix, cos2, sin2 = lysis_deposits(world, dead, spill)
     grids.deposit(f.food, pts, food, box)
+    counters.add(world, "food_spilled_" + cause, food.sum())
+    counters.add(world, "ecoli_burst", int(dead.sum()))
     grids.deposit(f.attractant, pts, attract, box)
     grids.deposit(f.matrix, pts, matrix, box)
     grids.deposit(f.axis_c, pts, matrix * cos2, box)

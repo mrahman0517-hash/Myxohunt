@@ -2169,6 +2169,61 @@ Source: the user's request; Saulnier 2026 (the test boxes).
 
 Source: the user's design; Seef 2021; Rombouts 2023; Kearns 2001; Kearns & Shimkets 1998; our test.
 
+**B97. The review's recommendations, adopted by the user (23 Oct 2026): fix the tools, count events directly, let starving cells scout, lock the speed-up at 10×, and judge settings by a fixed pass rule on 4 seeds.** *23 Oct 2026*
+- **Why:** an independent review (`docs/review-2026-10-23.md`) found that the tools, not the core
+  model, had failed: single-seed comparisons were within chance (the two ÷10 runs of B88 and B89
+  differed by 2–3 cell fates yet their prey ended up to 1.6× apart), the mean-field model behind
+  B86–B89 created hunters from nothing, B95 had switched scouting off by accident, and the shipped
+  Recommended preset had never been run as a population. The user chose every recommended option
+  (D1–D6).
+- **Scouting (D1):** under B95 a cell at zero prey food was past `stringent_delay` (30 bio-min,
+  3 real min at 10×) almost at once and lost its scouting, so only 0.06% of cells scouted (review C3).
+  The user first chose to move the block to `behaviour_delay` (2 bio-h; starvation recognition takes
+  "the first few hours", Harris 1998). Tested in three 6 bio-h branches from the 100 h checkpoint
+  each (target 3–10% scouts):
+
+  | Rule | Scouts | Kills per hunter per bio-h |
+  |---|---|---|
+  | Before (B95) | 0.06% | 0.03–0.04 |
+  | Block after 2 bio-h of starving | 0.7–1.2% | 0.06–0.08 |
+  | The same with a 1 bio-h rest instead of 6 | 0.7–1.6% | 0.06–0.08 |
+  | **Starving cells may scout** (`stringent_scouts` on) | **6.4–6.8%** | **0.11–0.13** |
+
+  The 2 bio-h block fell short because most hunters on the highways have starved longer than that;
+  the rest time doesn't matter. **The user chose "starving cells may scout"**, reversing B95's
+  choice. Backing in direction: starving cells glide faster alone (Jelsbak 2002) and follow the lipid
+  attractant (Kearns 2001); no study shows that starvation stops scouting. The 2 bio-h block stays
+  as the switch's "off" setting. `myxo_modes.update_scouts`, `settings.stringent_scouts`.
+- **Speed-up locked at 10× (D2):** slime is laid per real tick but fades per bio-minute, and scout
+  timers run in real minutes, so changing the speed-up changes trail strength and scouting too
+  (review C10). The B86 speed-up test is therefore confounded and doesn't show that lower speed-ups
+  hunt worse. The slider is removed from both apps and the speed-up is listed as fixed.
+- **Direct counters (`counters.py`):** births, founders, wakes, starvation deaths, kills, bursts,
+  touches, pauses, scouting, clock resets, famine fates, and food and store by source and sink, as
+  running totals in every stats row. A new test checks that food, scraps and the Myxo store close
+  their ledgers to rounding. `checks/prey_budget.py`'s inferred numbers are no longer needed.
+- **Tool fixes:** `check_populations.py` reads `False`/`0` as off (it read them as on), refuses to
+  resume a checkpoint made with another seed or settings, and writes checkpoints atomically; the
+  founder switch on a running world no longer drops a founder at every ground update; the
+  `wake_threshold` comment no longer calls 0.2 the Monod half-speed level (that is 0.14).
+- **The pass rule (D5, D6; `checks/judge_band.py`):** a seed passes over 150–300 bio-h if its means
+  are 700–1,000 E. coli and 100–220 Myxo, at least 80% of hourly samples lie within 500–1,300 and
+  75–300, it never drops below 210 and 45, and neither drifts more than 20% of its mean per
+  100 bio-h. A setting passes if 3 of 4 seeds pass. Rippling, killing, starving and scouting are
+  reported, not judged (D6).
+- **Not changed (D4):** persisters stay immortal; their share is now counted, and slow persister
+  death is offered only if they exceed 20% of the prey.
+- **Next (D5):** the baseline: the Recommended preset with these fixes, seeds 1–4 to 300 bio-h, and
+  prey only (no Myxo) seeds 1–2 to 250 bio-h. One lever (D3) is moved only if the baseline fails.
+- **Checked by an independent code review** (three reviewers, each finding verified): the browser
+  build was missing `counters.py`, a restart that left out an override wasn't caught, Windows could
+  refuse the atomic file swap while another program had the file open, Myxo dropped in directly
+  weren't counted, and the founder switch re-armed badly. All fixed (`seeding.add_myxo`,
+  `check_populations.swap_in`).
+- **Tests:** 96 pass (7 new); the tick-for-tick equivalence with the paper's model is still exact.
+
+Source: the review of 23 Oct 2026; the user's choices; Harris 1998; Jelsbak 2002; Kearns 2001.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
@@ -2288,6 +2343,7 @@ Source: the user's design; Seef 2021; Rombouts 2023; Kearns 2001; Kearns & Shimk
 ---
 
 ## Open questions
+- **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
   deaths (20% lysis) at refill ÷8 and ÷10.

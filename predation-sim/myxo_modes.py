@@ -16,15 +16,17 @@ Kaiser 1980; Harris 1998), so these rules read the prey food within reach, never
   scout mode        a lucky draw: the chance starts when prey food within reach drops below
                     scout_food and is at its top at zero food, where 10% of cells scout at once.
                     Off-trail A-motility, stronger slime, keener smell, steering toward the smell,
-                    no division. Since B95 a spell ends when the scout finds prey food or starts
-                    starving (random ends optional), a cell rests before scouting again, and at most
-                    10% of cells scout at once. Starving cells scout only if stringent_scouts is on.
+                    no division. Since B95 a spell ends when the scout finds prey food or has starved
+                    for behaviour_delay (B97; stringent_delay before), random ends optional; a cell
+                    rests before scouting again, and at most 10% of cells scout at once. Cells starving
+                    that long scout only if stringent_scouts is on.
 
 The clock runs on the biology clock; switching scout mode on and off runs on the real clock,
 like movement.
 """
 import numpy as np
 
+import counters
 import grids
 
 
@@ -55,6 +57,7 @@ def update_starve_clock(world, dt_bio):
     s, m = world.settings, world.myxo
     food = food_around(world)
     running = (m.starve_time > 0) | (food < s.living_food)
+    counters.add(world, "clock_resets", int(((m.starve_time > 0) & (food >= s.scout_food)).sum()))
     m.starve_time = np.where(food >= s.scout_food, 0.0, np.where(running, m.starve_time + dt_bio, 0.0))
 
 
@@ -97,8 +100,10 @@ def cap_starts(world, begin, keep):
 
 
 def update_scouts(world):
-    """Start and stop scouting for this tick (B71, B83, B95). A spell ends when the scout finds prey
-    food, when it starts starving (unless stringent_scouts), or, with scout_random_end, at random.
+    """Start and stop scouting for this tick (B71, B83, B95, B97). A spell ends when the scout finds
+    prey food, when it has starved for behaviour_delay (unless stringent_scouts), or, with
+    scout_random_end, at random. The block used to start at stringent_delay (30 bio-min, 3 real min at
+    10×), which switched scouting practically off (review of 23 Oct 2026, C3).
     After a spell a cell rests scout_rest_time before it may scout again, and at most
     scout_max_share of cells scout at once. No random numbers are used when scouting is off."""
     s, m = world.settings, world.myxo
@@ -112,12 +117,14 @@ def update_scouts(world):
         ends = ends | (roll < s.dt / s.scout_episode)
     allowed = ~resting(world)
     if not s.stringent_scouts:
-        starving = stringent(world)
+        starving = starving_behaviour(world)
         ends, allowed = ends | starving, allowed & ~starving
     keep = m.scout & ~ends
     begin = cap_starts(world, ~m.scout & allowed & (roll < scout_chance(world, food) * s.dt), keep)
     start_rest(world, m.uid[m.scout & ends])
     m.scout = keep | begin
+    counters.add(world, "scout_starts", int(begin.sum()))
+    counters.add(world, "scout_minutes", int(m.scout.sum()) * s.dt)
 
 
 def mode_factors(world, scout_value, starving_value, starving):
