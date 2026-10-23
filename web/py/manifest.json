@@ -3,6 +3,7 @@
   "app_params.py",
   "colonies.py",
   "contacts.py",
+  "counters.py",
   "ecoli_body.py",
   "ecoli_life.py",
   "engine.py",

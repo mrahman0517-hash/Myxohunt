@@ -54,7 +54,6 @@ class Param:
 
 
 MAIN = [
-    Param("speedup", "Biology speed-up (vs movement)", 1, 30, 1, backing="B4", fmt="×{:g}"),
     Param("efficiency", "Myxo keep of eaten food", 0.05, 0.6, 0.05, backing="measured 5–60%", fmt="{:.0%}",
           changes=lambda v, s: efficiency_changes(v)),
     Param("refill", "Ground refill speed", 1, 40, 1, backing="tuned", fmt="÷{:g}",
@@ -139,12 +138,12 @@ EFFECTS = [
            "off: they keep following slime past the colony edge"),
     Switch("Scouts keep going until they find prey (B95)", dict(scout_random_end=True),
            "off: spells also end at random (B83)"),
-    Switch("Starving scouts stop scouting (B95)", dict(stringent_scouts=True), "off: starving cells may scout"),
+    Switch("Starving cells may scout (B97)", dict(stringent_scouts=False), "off: cells starving over 2 bio-h stop scouting"),
     Switch("Pull toward prey smell (B10, B32)", dict(chemo_strength=0.0)),
     Switch("Living E. coli leak smell (B63)", dict(ecoli_attractant_rate=0.0)),
     Switch("Prey remains keep smelling (B74)", dict(ghost_attractant_rate=0.0)),
     Switch("Rippling on prey (B11, B76)", dict(matrix_ripple_threshold=1e9)),
-    Switch("New E. coli founders (B75)", dict(ecoli_seed_interval=0.0), "takes effect on Reset"),
+    Switch("New E. coli founders (B75)", dict(ecoli_seed_interval=0.0), "off: no new founders from now on"),
     Switch("E. coli starve to death (B34, B87)", dict(starvation_death_rate=0.0)),
 ]
 
@@ -180,6 +179,8 @@ FIXED = [
     ("Myxo reversals", "F* = 3/min, f_T = 0.08, refractory 20 s–5 min, 20 s memory", "Saulnier 2026; authors' code"),
     ("Alignment", "γ = 11/min toward slime and the ripple axis; pili feel slime 5 µm ahead", "Saulnier 2026"),
     ("Tick", "0.3 s", "authors' code"),
+    ("Biology speed-up", "×10: growth, killing and starving run 10× faster than gliding. Locked: slime and "
+     "scout timers run on the real clock, so another value changes the balance", "B4, B97"),
     ("E. coli size", "1 µm wide, born 2 µm, divide at 4 µm ± 10%", "BioNumbers"),
     ("E. coli growth", "doubling 20 min on the richest ground; each cell's speed ± 20%", "BioNumbers; Wang 2010"),
     ("E. coli starvation death", "0.69 per day from dormancy; burst 2 h after death", "Schink et al."),

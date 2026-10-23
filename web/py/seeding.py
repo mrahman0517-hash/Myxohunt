@@ -5,6 +5,7 @@ Myxo seeds coming in from outside at random times within myxo_arrival_window (B7
 """
 import numpy as np
 
+import counters
 import geometry as geo
 import grids
 import state
@@ -81,12 +82,21 @@ def initial_ecoli(world, tries=200):
 
 def add_due_founder(world):
     """Every ecoli_seed_interval bio min a single new E. coli lands at a random spot, founding a
-    new colony; there are no placement rules (B75, B78)."""
+    new colony; there are no placement rules (B75, B78). An interval of 0 means none: the app's
+    switch can set it on a running world, so nothing lands then, and when it's switched back on the
+    next founder comes one interval later (B97 fix)."""
+    interval = world.settings.ecoli_seed_interval
+    if interval <= 0:
+        world.next_ecoli_seed = float("inf")
+        return
+    if world.next_ecoli_seed == float("inf"):
+        world.next_ecoli_seed = world.bio_t + interval
     if world.bio_t < world.next_ecoli_seed:
         return
     point = world.rng.uniform(0, world.settings.box, 2)
     state.append_rows(world.ecoli, ecoli_seed(world, point))
     world.next_ecoli_seed = world.bio_t + world.settings.ecoli_seed_interval
+    counters.add(world, "ecoli_founders")
 
 
 # ---------------------------------------------------------------- Myxo
@@ -161,7 +171,15 @@ def add_due_myxo(world):
     its cells at least myxo_min_dist_colony from the E. coli (B47, B72, B78)."""
     while world.myxo_arrivals and world.myxo_arrivals[0][0] <= world.bio_t:
         _, size = world.myxo_arrivals.pop(0)
-        state.append_rows(world.myxo, myxo_group(world, myxo_spot(world), size))
+        add_myxo(world, myxo_group(world, myxo_spot(world), size))
+
+
+def add_myxo(world, cells):
+    """Put newcomer Myxo into the world, counting them and their stores (B97). Every way Myxo come
+    in (arrivals, the test boxes, the attack drops) goes through here."""
+    state.append_rows(world.myxo, cells)
+    counters.add(world, "myxo_arrived", state.count(cells))
+    counters.add(world, "store_arrived", cells.energy.sum())
 
 
 def uniform_myxo(world, n, aligned_axis=None):
@@ -173,7 +191,7 @@ def uniform_myxo(world, n, aligned_axis=None):
         headings = rng.uniform(0, 2 * np.pi, n)
     else:
         headings = aligned_axis + np.pi * rng.integers(0, 2, n)
-    state.append_rows(world.myxo, make_myxo(world, starts, headings))
+    add_myxo(world, make_myxo(world, starts, headings))
 
 
 def _place_ecoli(world, tries):

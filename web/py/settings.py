@@ -26,7 +26,9 @@ class Settings:
     seed: int = 1                    #         random seed, so a run can be repeated exactly
     dt: float = 0.005                # min     one tick = 0.3 s [code]
     grid_every: int = 20             # ticks   between ground-grid updates (B51) [assumed]
-    speedup: float = 10.0            # ×       slow biology runs this much faster than movement (B4)
+    speedup: float = 10.0            # ×       slow biology runs this much faster than movement (B4). Locked in
+                                     #         the apps at 10: slime and scout timers run on the real clock, so
+                                     #         another value changes the balance (B97)
     coarse_grid: float = 1.0         # µm      nutrients, food, attractant, matrix (B35) [assumed]
     eps_grid: float = 0.3            # µm      slime grid [code]
 
@@ -96,8 +98,9 @@ class Settings:
     ecoli_mobility: float = 1.0      #         × mean push on a rod [tuned]
     dormant_threshold: float = 0.01  #         nutrient level below which growth stops and a cell goes dormant [assumed]
     wake_threshold: float = 0.2      #         nutrient level that wakes a dormant cell and restarts its starvation
-                                     #          clock: a real meal, not a trace (the half-speed level of the Monod
-                                     #          curve, monod_half_saturation); 0.01 before (B87) [your choice]
+                                     #          clock: a real meal, not a trace. A chosen level, equal to the Monod
+                                     #          constant K but not the half-speed level, which is K/(1 + 2K) = 0.14
+                                     #          (B97 correction); 0.01 before (B87) [your choice]
     dormancy_before_death: float = 0.0  # bio min dormant before the death phase: none, starving E. coli lose
                                      #          viability from early on (Schink et al.) (B34, B87; 1440 before) [biology]
     starvation_death_rate: float = np.log(1000.0) / (10 * 1440.0)  # 1/bio min: viability falls to 0.1% in
@@ -221,7 +224,10 @@ class Settings:
                                      #          starving); True = also at random, every scout_episode on average (B95) [your choice]
     scout_rest_time: float = 60.0    # real min a cell must wait after a spell before it may scout again (B95) [your choice]
     scout_max_share: float = 0.1     #          at most this share of all Myxo scout at once (B95) [your choice]
-    stringent_scouts: bool = False   #          starving cells may scout; off = a scout that starts starving stops (B95) [your choice]
+    stringent_scouts: bool = True    #          starving cells may scout (B97, the user's choice: 6-7% scouts, kills ×3-4 in
+                                     #          branch tests); off = a scout that has starved for behaviour_delay (2 bio-h)
+                                     #          stops and no cell starving that long starts (~1% scouts). Off in B95, when
+                                     #          the block came at stringent_delay and switched scouting off [your choice]
     smell_steer: float = 3.0         # 1/min    cells leading a stream (no slime ahead), scouts, and cells touching
                                      #          living prey turn toward the prey smell: Δθ = rate·sin(φ − θ)·Δt (B95) [assumed]
     invade_on_contact: bool = True   #          a cell touching living prey stops following slime and steers up the

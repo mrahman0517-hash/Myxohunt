@@ -4,6 +4,7 @@ the nutrients, going dormant when food runs out, and starving to death (B33, B34
 """
 import numpy as np
 
+import counters
 import ecoli_body
 import grids
 
@@ -74,6 +75,7 @@ def update_dormancy(world, dt_bio):
     level = nutrient_under(world)
     hungry = alive(e) & ((level < s.dormant_threshold) | (e.dormant & (level < s.wake_threshold)))
     e.starve_time = np.where(hungry, e.starve_time + dt_bio, np.where(alive(e), 0.0, e.starve_time))
+    counters.add(world, "ecoli_wakes", int((alive(e) & e.dormant & ~hungry).sum()))
     e.dormant = np.where(alive(e), hungry, e.dormant)
 
 
@@ -85,6 +87,7 @@ def starvation_deaths(world, dt_bio):
     at_risk = alive(e) & e.dormant & ~e.persister & (e.starve_time > s.dormancy_before_death)
     dies = at_risk & (world.rng.random(len(e.uid)) < 1.0 - np.exp(-s.starvation_death_rate * dt_bio))
     e.lysis_timer[dies] = s.starved_lysis_delay
+    counters.add(world, "ecoli_starved", int(dies.sum()))
 
 
 def leak_attractant(world, dt_bio):

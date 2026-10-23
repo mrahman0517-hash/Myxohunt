@@ -6,6 +6,7 @@ check.
 """
 import numpy as np
 
+import counters
 import ecoli_body
 import grids
 
@@ -23,10 +24,13 @@ def update_spills(world, dt_bio):
     giving off attractant for as long as they last, so eaten spots go on smelling of prey while
     their food is still there (B74)."""
     s, f = world.settings, world.fields
+    food_before, scraps_before = f.food.sum(), f.scraps.sum()
     f.food = grids.diffuse(f.food, s.food_diffusion, dt_bio, f.spacing)
     grids.fade(f.food, s.food_decay_time, dt_bio)
     f.scraps = grids.diffuse(f.scraps, s.food_diffusion, dt_bio, f.spacing)
     grids.fade(f.scraps, s.food_decay_time, dt_bio)
+    counters.add(world, "food_lost", food_before - f.food.sum())          # fading (and rounding at 0)
+    counters.add(world, "scraps_lost", scraps_before - f.scraps.sum())
     f.attractant += s.ghost_attractant_rate * f.matrix * dt_bio
     f.attractant = grids.diffuse(f.attractant, s.attractant_diffusion, dt_bio, f.spacing)
     grids.fade(f.attractant, s.attractant_decay_time, dt_bio)
