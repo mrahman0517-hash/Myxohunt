@@ -2224,6 +2224,50 @@ Source: the user's design; Seef 2021; Rombouts 2023; Kearns 2001; Kearns & Shimk
 
 Source: the review of 23 Oct 2026; the user's choices; Harris 1998; Jelsbak 2002; Kearns 2001.
 
+**B98. The baseline fails the band, and tuning stops for good (the user's choice): the Recommended preset with the B97 rules holds the prey far below the band while the hunters shrink slowly.** *24 Oct 2026*
+- **The baseline** (B97's step 5): the Recommended preset with starving cells scouting, live world,
+  seeds 1–4 meant to run to 300 bio-h, and prey only (no Myxo) seeds 1–2 to 250 bio-h, six runs in
+  parallel (`checks/run_baseline.sh`; picture `checks/output/base_rec_compare.png`, drawn by
+  `checks/plot_baseline.py`).
+- **Verdict (`checks/judge_band.py`): 0 of 4 seeds pass.** The runs were stopped at 195–265 bio-h,
+  once every seed had spent more than 20% of the 150–300 h window outside 500–1,300 E. coli, so none
+  could pass whatever came after.
+
+  | Seed | E. coli peak | Myxo peak | E. coli, 150 h to stop | Myxo, 150 h to stop | Myxo drift per 100 h |
+  |---|---|---|---|---|---|
+  | 1 | 1,637 (59 h) | 433 (92 h) | 340 (min 288) | 252 | −43% |
+  | 2 | 2,040 (81 h) | 366 (112 h) | 311 (min 262) | 214 | −46% |
+  | 3 | 1,580 (52 h) | 425 (85 h) | 222 (min 184) | 243 | −47% |
+  | 4 | 1,783 (53 h) | 555 (74 h) | 92 (min 60) | 331 | −46% |
+  | Target | | | 700–1,000 | 100–220 | under 20% |
+
+- **What happens, from the direct counters (per bio-h, after 150 h):**
+  - **The hunters hold the prey down.** They kill 7–13 E. coli per bio-h out of 10–17 births;
+    another 1–6 starve. Scouting (6–10% of hunters, B97) is what changed: under B89 the prey sat at
+    about 1,100.
+  - **But the hunters barely grow.** 95–98% of them are starving, so they divide only 0.02–0.12 times
+    per bio-h, while the famine takes 0.6–1.2 by lysis and 0.3–0.5 as spores. None starve to death:
+    they reach their famine first. So they shrink only slowly, about 45% per 100 bio-h.
+  - **They linger as starving rods.** With famine lysis at 20% (B89), 70% of famine cells stay on as
+    rods that keep hunting for days (515–665 rod fates per run).
+  - **The result is a deep, slow cycle,** not a band: prey crash below it while the hunters take
+    hundreds of bio-hours to come down.
+- **Prey alone settle above the band:** 1,113–1,187 E. coli at 250 bio-h (peaks about 3,000 at
+  46–56 h), 89–90% dormant, 35–37% of them immortal persisters. With hunters, persisters are only
+  3–9% of the prey, so slow persister death (D4) isn't triggered for the runs that matter.
+- **The look (reported, not judged, D6):** essentially no rippling (0 cells on average), 0.1–0.2% of
+  hunters in a killing pause, about 9.5% scouting.
+- **What theory suggests, untested:** a higher hunter death rate raises the prey's balance level and
+  lowers the hunters' (Rosenzweig & MacArthur 1963, B85). The agreed lever (D3) was the famine lysis
+  share back toward the classic 60–80% (the app's other evidence option, 70%), one round on 4 seeds.
+  Measuring the hunter balance point in short thinning branches first was the alternative.
+- **The user's decision (24 Oct 2026): stop tuning and document.** The Recommended preset stays as it
+  is in both apps; it does not hold the band, and the README says so.
+- **Cost:** about 16 h of computing for the six runs, plus about 8 h lost when the laptop slept and
+  the runs stopped (they resumed from their checkpoints).
+
+Source: our runs; the user's choice; Rosenzweig & MacArthur 1963.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
@@ -2343,6 +2387,10 @@ Source: the review of 23 Oct 2026; the user's choices; Harris 1998; Jelsbak 2002
 ---
 
 ## Open questions
+- **The band is not reached (B98, 24 Oct 2026):** with starving cells scouting, the hunters hold the
+  prey at about 100–350 (target 700–1,000) and shrink only slowly through the famine. Tuning stopped
+  by the user's choice. If it's ever resumed: famine lysis at 70% (D3) on 4 seeds, or first measure
+  the hunter balance point in short thinning branches.
 - **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
