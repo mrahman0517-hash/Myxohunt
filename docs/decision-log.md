@@ -2268,6 +2268,46 @@ Source: the review of 23 Oct 2026; the user's choices; Harris 1998; Jelsbak 2002
 
 Source: our runs; the user's choice; Rosenzweig & MacArthur 1963.
 
+**B99 (under test). A branch test of famine lysis 70% from the stopped baseline states (the user's choice: a quick test before any full round).** *25 Oct 2026*
+- **Why:** B98 ended with its theory untested. The user wasn't happy with that ending and chose a cheap
+  test first: does a higher hunter death rate raise the prey and lower the hunters (Rosenzweig &
+  MacArthur 1963)?
+- **How** (`checks/branch_test.py`, `run_branches.sh`, `compare_branches.py`): each baseline seed was
+  carried on from its last checkpoint (195–265 bio-h) for 40 bio-h, twice from the very same state and
+  random numbers. One branch used famine lysis 70% (classic counts 60–80%, Wireman & Dworkin 1977; B80)
+  and the other 20%, the control. Any difference between the two comes from the change. Picture:
+  `checks/output/branch_compare.png`.
+
+  | Seed | At the branch | +40 h, lysis 70% | +40 h, control (20%) |
+  |---|---|---|---|
+  | 1 | 295 / 207 | 461 / 111 | 271 / 183 |
+  | 2 | 404 / 166 | 510 / 104 | 444 / 142 |
+  | 3 | 229 / 198 | 464 / 120 | 438 / 171 |
+  | 4 | 126 / 301 | 311 / 170 | 226 / 262 |
+  | Target | | 700–1,000 / 100–220 | |
+
+  (E. coli / Myxo.)
+- **The hunters respond clearly:** in every seed they ended 27–39% below the control, inside their
+  band.
+- **The prey respond weakly:** they ended 6–70% above the control (seed 3 within chance), still at
+  311–510, far below 700. They were rising by about 2–7 per bio-h at the end.
+- **Why the prey move so little (direct counters, per bio-h):** kills hardly depend on hunter numbers
+  (8–11 under 70% vs 10–11 in the control). A few dozen hunters at the prey do the killing; the
+  starving majority on the highways doesn't. Kills fell by only 0–27% (mean about 13%).
+- **Why the hunters can't grow back:**
+  - 89–97% of them are starving. They take in 465–625 store units per bio-h, and 78–96% of that goes
+    to running costs.
+  - They're born at only 0.05–0.30 per bio-h, against 1.9–3.4 famine losses under 70%, so at +40 h
+    they're still falling by 1–3 per bio-h.
+  - The cause is in the rules: starving cells can't divide (B83), and a cell eating thin prey food (1–3
+    units within reach) never ends its starvation. So food becomes upkeep, not offspring.
+- **Open:** whether the prey reach 700 before the hunters fall below 45.
+- **Cost:** about 1 h of computing for the 8 branches, all in parallel.
+- **Script change:** `branch_test.py` now keeps its final checkpoint, so a branch can be extended. It
+  refuses to resume a branch with different settings.
+
+Source: our runs; Rosenzweig & MacArthur 1963; Wireman & Dworkin 1977.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
@@ -2391,6 +2431,9 @@ Source: our runs; the user's choice; Rosenzweig & MacArthur 1963.
   prey at about 100–350 (target 700–1,000) and shrink only slowly through the famine. Tuning stopped
   by the user's choice. If it's ever resumed: famine lysis at 70% (D3) on 4 seeds, or first measure
   the hunter balance point in short thinning branches.
+  **B99 (25 Oct 2026):** a 40 bio-h branch test at 70%. The hunters fell into their band in every seed
+  and the prey rose slowly, but stayed at 311–510. Kills barely depend on hunter numbers, and starving
+  hunters turn food into upkeep, not offspring.
 - **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
