@@ -15,7 +15,7 @@ import pandas as pd                                          # noqa: E402
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
 SEEDS = (1, 2, 3, 4)
-ARMS = (("br70", "lysis 70%", "#2a78d6"), ("br20", "lysis 20% (control)", "#898781"))
+ARMS = ((("br70L", "br70"), "lysis 70%", "#2a78d6"), (("br20",), "lysis 20% (control)", "#898781"))   # the longest branch that exists
 BAND = {"ecoli": (700, 1000), "myxo": (100, 220)}
 
 
@@ -52,8 +52,8 @@ def main():
     for k, seed in enumerate(SEEDS):
         start = start_of(seed)
         print(f"seed {seed}, branched at {start / 60:.0f} bio-h")
-        for arm, label, colour in ARMS:
-            d = branch(f"{arm}_s{seed}", start)
+        for names, label, colour in ARMS:
+            d = next((b for b in (branch(f"{arm}_s{seed}", start) for arm in names) if b is not None), None)
             if d is None or len(d) < 2:
                 print(f"  {label}: no data yet")
                 continue

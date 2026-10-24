@@ -2301,10 +2301,35 @@ Source: our runs; the user's choice; Rosenzweig & MacArthur 1963.
     they're still falling by 1–3 per bio-h.
   - The cause is in the rules: starving cells can't divide (B83), and a cell eating thin prey food (1–3
     units within reach) never ends its starvation. So food becomes upkeep, not offspring.
-- **Open:** whether the prey reach 700 before the hunters fall below 45.
+- **Open:** whether the prey reach 700 before the hunters fall below 45. **Answered below.**
 - **Cost:** about 1 h of computing for the 8 branches, all in parallel.
 - **Script change:** `branch_test.py` now keeps its final checkpoint, so a branch can be extended. It
   refuses to resume a branch with different settings.
+
+**Result of the long branches (the user's choice: the four 70% branches carried on to +100 bio-h,
+`checks/run_branches_long.sh`; the first 40 h repeated the short branches exactly):** the system settles,
+a little below the band.
+
+| Seed | +60 to +100 h: E. coli mean (range) | Myxo mean (range) | Myxo born / lost per bio-h |
+|---|---|---|---|
+| 1 | 526 (487–565) | 100 (96–105) | 0.53 / 0.45 |
+| 2 | 546 (501–585) | 84 (80–93) | 0.53 / 0.81 |
+| 3 | 570 (541–606) | 98 (92–109) | 0.53 / 0.83 |
+| 4 | 629 (405–814), still rising | 125 (117–139), rising | 0.70 / 0.83 |
+| Band | 700–1,000 (wide 500–1,300) | 100–220 (wide 75–300) | |
+
+- **The hunters stop falling at about 85–100 in seeds 1–3.** Once fewer, they're better fed: 73–79%
+  starving (89–97% before), and they're born 0.5–0.7 times per bio-h (0.05–0.3 before), close to
+  their losses. So the B99 point that "food becomes upkeep, not offspring" holds for a crowded,
+  starving population; it eases as the hunters thin out, and a balance point exists.
+- **The prey level off at about 530–570 in seeds 1–3.** They're now held down by hunger as much as
+  by the hunters: 10–11 starve per bio-h against 7–10 eaten.
+- **Seed 4** started its branch earlier (195 bio-h), with more hunters and fewer prey. It is still
+  climbing: 812 E. coli and 134 Myxo at +100 h.
+- **Against the pass rule (informally;** the rule's window is 150–300 bio-h of a fresh run): seeds 1–3
+  would meet the wide bands, minima and probably the drift limit, but fail both means. The prey are
+  about 150–170 short and the hunters 0–16 short.
+- **Cost:** about 1.1 h of computing for the four, in parallel.
 
 Source: our runs; Rosenzweig & MacArthur 1963; Wireman & Dworkin 1977.
 
@@ -2433,7 +2458,9 @@ Source: our runs; Rosenzweig & MacArthur 1963; Wireman & Dworkin 1977.
   the hunter balance point in short thinning branches.
   **B99 (25 Oct 2026):** a 40 bio-h branch test at 70%. The hunters fell into their band in every seed
   and the prey rose slowly, but stayed at 311–510. Kills barely depend on hunter numbers, and starving
-  hunters turn food into upkeep, not offspring.
+  hunters turn food into upkeep, not offspring. Carried on to +100 bio-h, three seeds settled at about
+  530–570 E. coli and 85–100 Myxo, a little below both band means. Seed 4 was still rising
+  (812 / 134).
 - **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
