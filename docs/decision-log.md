@@ -2333,6 +2333,47 @@ a little below the band.
 
 Source: our runs; Rosenzweig & MacArthur 1963; Wireman & Dworkin 1977.
 
+**B100 (under test). Faster ground refill on top of lysis 70%, branch-tested from the +100 h states (the user's choice).** *25 Oct 2026*
+- **Why:** under lysis 70% both counts settle a little below their band means (B99). The prey are now
+  limited by hunger about as much as by the hunters, so more prey food should lift the prey, and with
+  them the hunters. In the textbook model a richer supply raises the hunters (Rosenzweig & MacArthur
+  1963).
+- **The test** (`checks/run_refill.sh`, `compare_refill.py`): from each seed's 70% branch at +100 bio-h,
+  60 bio-h more with ground refill ÷6 (`nutrient_regrow_rate` 1/18,000 per bio-min) and ÷4 (1/12,000),
+  against ÷8 (1/24,000, the Recommended value) carried on unchanged. All arms start from the same state
+  and random numbers. That makes 12 runs in parallel.
+- **The refill is tuned, not measured** (B68, B85).
+- **Not testable this way:** ground richness. It is set once, when the world is made
+  (`seeding.py`).
+- **Not chosen:** a full round at 70% now (expected to fail on both means); accepting the balance at
+  about 550 / 95.
+
+**Result of the refill test (`checks/output/refill_compare.png`):** refill ÷6 brings both counts to the
+lower edge of the band; ÷4 overshoots the prey, and its hunters are still booming.
+
+| Seed | ÷8 (control), last 30 h | ÷6, last 30 h | ÷4, last 30 h |
+|---|---|---|---|
+| 1 | 585 / 96 | 711 / 111, both rising | 1,051 / 146, hunters rising fast |
+| 2 | 543 / 86 | 695 / 96, both rising | 1,111 / 117, hunters rising fast |
+| 3 | 503 / 100 | 697 / 108, both rising | 1,050 / 135, hunters rising fast |
+| 4 | 641 / 181, prey falling | 791 / 192, prey falling | 1,047 / 235, above the hunter band |
+| Band | 700–1,000 / 100–220 | | |
+
+(E. coli / Myxo.)
+- **More food lifts both, as the textbook guide predicts.** Prey births per bio-h went from 18–24
+  (÷8) to 24–30 (÷6) and 36–43 (÷4). Hunter births went from 0.45–1.0 to 0.77–1.4 and 1.2–2.1, while
+  famine losses fell, so the hunters grow.
+- **÷6 is not settled at +60 h.** In seeds 1–3 the hunters were still gaining about 0.3–0.5 per bio-h.
+  Seed 4 is the one seed in a visible cycle: its hunters reached about 200, and its prey were being
+  eaten down (883 → 673) in every arm.
+- **÷4 is heading into a boom.** The prey sit at about 1,050–1,190, and the hunters are born 6–15 times
+  faster than they die, so the prey will likely be pulled down next.
+- **Against the means of the pass rule (informally, last 30 bio-h):** at ÷6, seeds 1 and 4 meet both
+  means. Seeds 2 and 3 miss by a hair: 695 and 697 E. coli, and seed 2 has 96 Myxo.
+- **Cost:** about 1.6–1.8 h of computing for the 12, in parallel.
+
+Source: our runs; Rosenzweig & MacArthur 1963.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
@@ -2461,6 +2502,9 @@ Source: our runs; Rosenzweig & MacArthur 1963; Wireman & Dworkin 1977.
   hunters turn food into upkeep, not offspring. Carried on to +100 bio-h, three seeds settled at about
   530–570 E. coli and 85–100 Myxo, a little below both band means. Seed 4 was still rising
   (812 / 134).
+  **B100 (25 Oct 2026):** adding refill ÷6 on top lifts both to the band's lower edge (about 700 /
+  100–110, still rising slowly; seed 4 about 790 / 192). ÷4 overshoots the prey (about 1,050–1,110)
+  while its hunters boom.
 - **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
