@@ -2374,6 +2374,17 @@ lower edge of the band; ÷4 overshoots the prey, and its hunters are still boomi
 
 Source: our runs; Rosenzweig & MacArthur 1963.
 
+**B101 (under test). The full round for famine lysis 70% + refill ÷6 (the user's choice).** *25 Oct 2026*
+- **Why:** the branch tests (B99, B100) put both counts at the band's lower edge. Only fresh runs,
+  judged by the B97 pass rule over 150–300 bio-h, can say whether the setting passes. A fresh run
+  also has its own first wave, which the branches skipped.
+- **The round** (`checks/run_round_r6.sh`): the Recommended preset with those two changes, seeds 1–4
+  to 300 bio-h, all in parallel, judged by `checks/judge_band.py` at the end. Expected to take about
+  15–20 h of computing with the laptop awake.
+- **Not chosen:** extending the branches first; adopting the setting without a full round.
+
+Source: the user's choice; B97–B100.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
