@@ -8,8 +8,8 @@ app_params.py — every setting the live app shows, sorted as the user asked (17
 - FIXED: measured or from the paper, shown but not editable.
 
 Each setting says when a change takes effect: at once ("live") or when a new world starts ("reset").
-The app starts from RECOMMENDED: the settings closest to the targets so far (B89) with the
-recommended option of every EVIDENCE rule.
+The app starts from RECOMMENDED: the settings closest to the targets so far (B101, adopted in B102)
+with the recommended option of every EVIDENCE rule.
 """
 from dataclasses import dataclass, field
 
@@ -159,7 +159,7 @@ class Evidence:
 EVIDENCE = [
     Evidence("Starving Myxo that lyse in the famine", [
         ("20%: at least 80% survive (O'Connor & Zusman 1988)", dict(famine_lysis_share=0.2)),
-        ("70%: classic counts of 60–80% (Wireman & Dworkin 1977)", dict(famine_lysis_share=0.7))]),
+        ("70%: classic counts of 60–80% (Wireman & Dworkin 1977)", dict(famine_lysis_share=0.7))], best=1),
     Evidence("What starts rippling", [
         ("contact with prey, living or dead (Berleman 2006)", dict(ripple_live_prey_weight=1.0)),
         ("prey remains only, after digestion (Saulnier 2026)", dict(ripple_live_prey_weight=0.0))]),
@@ -191,8 +191,9 @@ FIXED = [
     ("Scout speed", "1.1× (4.4 µm/min)", "Spormann & Kaiser 1999"),
 ]
 
-# The B89 settings (closest to the targets so far) with the recommended EVIDENCE options.
-RECOMMENDED = dict(nutrient_regrow_rate=REFILL_BASE / 8, richness_min=RICH_LO * 0.7, richness_max=RICH_HI * 0.7,
+# The B101 settings (closest to the targets so far; famine lysis 70% comes from EVIDENCE) with the
+# recommended EVIDENCE options.
+RECOMMENDED = dict(nutrient_regrow_rate=REFILL_BASE / 6, richness_min=RICH_LO * 0.7, richness_max=RICH_HI * 0.7,
                    **efficiency_changes(0.6))
 for _rule in EVIDENCE:
     RECOMMENDED.update(_rule.options[_rule.best][1])

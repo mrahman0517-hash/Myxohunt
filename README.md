@@ -53,13 +53,18 @@ right of the world) opens the advanced settings, switches that turn a rule off, 
 studies disagree (the recommended option starred), and the fixed values, which are measured or
 from the paper and can't be changed. "Recommended" restores the starting settings.
 
-## Known limitation: the counts don't settle into a fixed band
+## Known limitation: the prey settle just under the target band
 
-The aim was a balanced cycle, after the first wave, of about 700–1,000 E. coli and about 150 Myxo.
-The Recommended settings don't reach it. In four seeds (`docs/decision-log.md`, B98), the hunters
-held the prey at about 100–350 while they themselves shrank only slowly through the famine, a
-deep, slow cycle rather than a band. Without hunters the prey settle at about 1,150. Tuning was
-stopped there; `docs/review-2026-10-23.md` explains why, and what could be tried next.
+The aim was a balanced cycle, after the first wave, of about 700–1,000 E. coli and about 150 Myxo,
+judged over 150–300 bio-h on four seeds (`checks/judge_band.py`, 3 of 4 must pass).
+
+- **The Recommended settings** (famine lysis 70%, ground refill ÷6; `docs/decision-log.md`, B101–B102)
+  come close but don't pass: 1 of 4 seeds passes.
+- **What holds:** after the first wave, both populations stay steady in a narrow range. The hunters
+  average 131–153, inside their band in every seed.
+- **What falls short:** the prey average 541–752, just under their band in three seeds.
+- **The earlier preset** (famine lysis 20%, refill ÷8; B98) crashed the prey to about 100–350.
+- **Rippling** almost never forms in the predation world: the hunters are too sparse.
 
 ## Layout
 

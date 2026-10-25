@@ -2412,6 +2412,31 @@ and the prey sit just under theirs.
 
 Source: our runs.
 
+**B102. The Recommended preset becomes famine lysis 70% + ground refill ÷6 in both apps (the user's choice).** *25 Oct 2026*
+- **Why:** it doesn't pass the band (B101, 1 of 4 seeds), but it is far closer than the old preset.
+  The old one (lysis 20%, refill ÷8) crashed the prey to about 100–350 (B98). The new one holds both
+  populations steady, with the hunters in their band and the prey just under theirs.
+- **Changes** (`app_params.py`):
+  - `RECOMMENDED` refill ÷8 → ÷6;
+  - the ★ on famine lysis moves from 20% (O'Connor & Zusman 1988) to 70% (the classic counts of
+    60–80%, Wireman & Dworkin 1977). Both options stay selectable. The dispute itself is unresolved;
+    70% is the choice that holds the populations closest to the band.
+  - Unchanged: ground ×0.7, efficiency 60%, and the other ★ options.
+- **Also:** `settings.py` defaults are unchanged (the preset is overrides); the web app is rebuilt;
+  the README's known-limitation section is updated. 96 tests pass.
+
+Source: the user's choice; B101; Wireman & Dworkin 1977; O'Connor & Zusman 1988.
+
+**B103 (under test). A full round at refill ÷5 to lift the prey into the band (the user's choice).** *25 Oct 2026*
+- **Why:** at ÷6 the prey sit 33–160 cells under the band's 700 mean. In the branch test (B100), ÷4
+  overshot the prey (about 1,050–1,110) and set off a hunter boom. ÷5 lies between the two.
+- **The round** (`checks/run_round_r5.sh`): the new Recommended preset (B102) with refill ÷5
+  (`nutrient_regrow_rate` 1/15,000 per bio-min), seeds 1–4 to 300 bio-h, judged by
+  `checks/judge_band.py`. About 8–9 h of computing.
+- **If it passes,** ÷5 becomes the preset.
+
+Source: the user's choice; B100, B101.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
@@ -2545,7 +2570,8 @@ Source: our runs.
   while its hunters boom.
   **B101 (25 Oct 2026):** the full round of 70% + ÷6 passes 1 of 4 seeds. Both populations hold steady
   after the first wave: hunter means 131–153 (in band in all four seeds), prey means 541–752 (seed 4
-  in band; seeds 2 and 3 at 658 and 667).
+  in band; seeds 2 and 3 at 658 and 667). Adopted as the Recommended preset (B102); a ÷5 round is
+  running (B103).
 - **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
