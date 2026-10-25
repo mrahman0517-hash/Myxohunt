@@ -2383,7 +2383,34 @@ Source: our runs; Rosenzweig & MacArthur 1963.
   15–20 h of computing with the laptop awake.
 - **Not chosen:** extending the branches first; adopting the setting without a full round.
 
-Source: the user's choice; B97–B100.
+**Result of the full round (`checks/output/r6_compare.png`, drawn by `checks/plot_round.py`; verdict
+from `checks/judge_band.py`): 1 of 4 seeds pass, so the setting doesn't pass (3 needed).** After the first
+wave, both populations hold steady in a narrow range: the hunters sit inside their band in every seed,
+and the prey sit just under theirs.
+
+| Seed | E. coli mean, 150–300 h (min) | Myxo mean (min) | Drift per 100 h, E / H | Fails on |
+|---|---|---|---|---|
+| 1 | 541 (389) | 153 (128) | +9% / +2% | prey mean; only 73% of hours in 500–1,300 |
+| 2 | 658 (291) | 139 (97) | +22% / +39% | prey mean; drift |
+| 3 | 667 (444) | 131 (117) | +11% / −10% | prey mean |
+| 4 | **752** (572) | **151** (129) | +11% / +20% | — (passes) |
+| Band | 700–1,000 | 100–220 | under ±20% | |
+
+- **Against the baseline (B98):** the prey means rose from 92–340 to 541–752, and the hunter means fell
+  from 214–331 to 131–153. The B98 baseline was a slow slide; this round holds steady.
+- **The first wave is still large:** prey peaked at 1,508–2,212 (44–63 bio-h) and hunters at 465–527
+  (76–94 bio-h), then both came down by about 150 bio-h.
+- **Per bio-h over 150–300 h (direct counters):** 25–28 E. coli born, 11–14 eaten and 10–15 starved;
+  0.66–0.81 hunters born against 0.5–1.0 famine lyses and about 0.1 spores. No hunter starved to
+  death. So the prey are held down about equally by the hunters and by hunger.
+- **The look (reported, not judged):** essentially no rippling (0–0.1 cells on average), 0.3–0.4% of
+  hunters killing at a time, 5–6% scouting, 69–82% starving. The rippling problem of B96 and B98
+  remains.
+- **The prey are still drifting up slowly** (+9 to +22% per 100 bio-h), so a longer run might reach
+  the band. Seed 2 fails on drift for that reason.
+- **Cost:** about 8.4 h of computing for the four, in parallel. My estimate had been 15–20 h.
+
+Source: our runs.
 
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
@@ -2516,6 +2543,9 @@ Source: the user's choice; B97–B100.
   **B100 (25 Oct 2026):** adding refill ÷6 on top lifts both to the band's lower edge (about 700 /
   100–110, still rising slowly; seed 4 about 790 / 192). ÷4 overshoots the prey (about 1,050–1,110)
   while its hunters boom.
+  **B101 (25 Oct 2026):** the full round of 70% + ÷6 passes 1 of 4 seeds. Both populations hold steady
+  after the first wave: hunter means 131–153 (in band in all four seeds), prey means 541–752 (seed 4
+  in band; seeds 2 and 3 at 658 and 667).
 - **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
