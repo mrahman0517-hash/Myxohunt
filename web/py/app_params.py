@@ -8,7 +8,7 @@ app_params.py — every setting the live app shows, sorted as the user asked (17
 - FIXED: measured or from the paper, shown but not editable.
 
 Each setting says when a change takes effect: at once ("live") or when a new world starts ("reset").
-The app starts from RECOMMENDED: the settings closest to the targets so far (B101, adopted in B102)
+The app starts from RECOMMENDED: the settings closest to the targets so far (B103, adopted in B104)
 with the recommended option of every EVIDENCE rule.
 """
 from dataclasses import dataclass, field
@@ -191,9 +191,9 @@ FIXED = [
     ("Scout speed", "1.1× (4.4 µm/min)", "Spormann & Kaiser 1999"),
 ]
 
-# The B101 settings (closest to the targets so far; famine lysis 70% comes from EVIDENCE) with the
+# The B103 settings (closest to the targets so far; famine lysis 70% comes from EVIDENCE) with the
 # recommended EVIDENCE options.
-RECOMMENDED = dict(nutrient_regrow_rate=REFILL_BASE / 6, richness_min=RICH_LO * 0.7, richness_max=RICH_HI * 0.7,
+RECOMMENDED = dict(nutrient_regrow_rate=REFILL_BASE / 5, richness_min=RICH_LO * 0.7, richness_max=RICH_HI * 0.7,
                    **efficiency_changes(0.6))
 for _rule in EVIDENCE:
     RECOMMENDED.update(_rule.options[_rule.best][1])

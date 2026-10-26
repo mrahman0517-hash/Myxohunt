@@ -53,17 +53,18 @@ right of the world) opens the advanced settings, switches that turn a rule off, 
 studies disagree (the recommended option starred), and the fixed values, which are measured or
 from the paper and can't be changed. "Recommended" restores the starting settings.
 
-## Known limitation: the prey settle just under the target band
+## Known limitation: in the band, but not steady enough to pass
 
 The aim was a balanced cycle, after the first wave, of about 700–1,000 E. coli and about 150 Myxo,
 judged over 150–300 bio-h on four seeds (`checks/judge_band.py`, 3 of 4 must pass).
 
-- **The Recommended settings** (famine lysis 70%, ground refill ÷6; `docs/decision-log.md`, B101–B102)
-  come close but don't pass: 1 of 4 seeds passes.
-- **What holds:** after the first wave, both populations stay steady in a narrow range. The hunters
-  average 131–153, inside their band in every seed.
-- **What falls short:** the prey average 541–752, just under their band in three seeds.
-- **The earlier preset** (famine lysis 20%, refill ÷8; B98) crashed the prey to about 100–350.
+- **The Recommended settings** (famine lysis 70%, ground refill ÷5; `docs/decision-log.md`, B103–B104)
+  put the means inside both bands in all four seeds: prey 707–828, hunters 171–201.
+- **Why they still fail the rule (0 of 4 pass):** on drift. The rule allows at most 20% change per
+  100 bio-h. The prey take until about 190 bio-h to climb back from the first-wave crash, and both
+  populations swing slowly within the band.
+- **Earlier presets:** refill ÷6 (B101–B102) held steadier but left the prey just under the band (1 of
+  4 passed). The original preset (famine lysis 20%, refill ÷8; B98) crashed the prey to about 100–350.
 - **Rippling** almost never forms in the predation world: the hunters are too sparse.
 
 ## Layout

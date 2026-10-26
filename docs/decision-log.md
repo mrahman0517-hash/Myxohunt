@@ -2469,6 +2469,22 @@ both means, the wide bands and the minima. All four fail on drift only.**
 
 Source: our runs.
 
+**B104. Refill ÷5 becomes the Recommended preset; the pass rule stays as agreed; tuning stops (the user's choice).** *26 Oct 2026*
+- **Why:** ÷5 is the closest to the user's aim, a balanced cycle within a fixed range. It is the only
+  setting with both means inside the bands in all four seeds (B103). It still fails the agreed rule,
+  on drift only.
+- **What was not changed:** the pass rule (B97). It still fails ÷5, and the documents say so. The
+  drift limit may be stricter than the aim (it counts slow swings as drift), but it was not loosened
+  after seeing the results.
+- **Changes:**
+  - `app_params.RECOMMENDED` refill ÷6 → ÷5; famine lysis stays 70% (B102);
+  - the web app is rebuilt;
+  - the README's known-limitation section is updated.
+- **Not chosen:** keeping ÷6 (steadier, but prey under the band in 3 of 4 seeds); revising the drift
+  check and re-judging; longer runs first (to 450 bio-h).
+
+Source: the user's choice; B97, B101, B103.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
@@ -2605,6 +2621,7 @@ Source: our runs.
   in band; seeds 2 and 3 at 658 and 667). Adopted as the Recommended preset (B102).
   **B103 (26 Oct 2026):** at refill ÷5 all four seeds meet both means (prey 707–828, hunters
   171–201) but fail on drift: slow settling after the first wave, and slow swings within the band.
+  **B104:** ÷5 adopted as the Recommended preset; the rule unchanged; tuning stopped.
 - **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
