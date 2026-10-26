@@ -2437,6 +2437,38 @@ Source: the user's choice; B101; Wireman & Dworkin 1977; O'Connor & Zusman 1988.
 
 Source: the user's choice; B100, B101.
 
+**Result of the ÷5 round (`checks/output/r5_compare.png`): 0 of 4 seeds pass, but every seed meets
+both means, the wide bands and the minima. All four fail on drift only.**
+
+| Seed | E. coli mean, 150–300 h (min) | Myxo mean (min) | Drift per 100 h, E / H | 50-h means, E / H (150, 200, 250 h) |
+|---|---|---|---|---|
+| 1 | 707 (515) | 201 (174) | +14% / **−25%** | 660/229 → 708/195 → 752/178 |
+| 2 | 713 (484) | 171 (138) | **+26%** / −5% | 582/187 → 784/146 → 775/181 |
+| 3 | 729 (471) | 180 (157) | **+25%** / −4% | 615/190 → 771/163 → 799/186 |
+| 4 | 828 (524) | 180 (131) | −1% / **+34%** | 761/148 → 985/176 → 742/217 |
+| Band | 700–1,000 | 100–220 | under ±20% | |
+
+- **Against ÷6 (B101):** the prey means rose from 541–752 to 707–828, so all four seeds are now in band
+  (one before). The hunters rose from 131–153 to 171–201, still in band. Drift got worse: 4 seeds fail
+  on it, against 1 before.
+- **Why drift fails (two reasons):**
+  - **Slow settling:** at 150 bio-h the prey are still climbing back from the first-wave crash (about
+    500), and they enter the band only around 190 bio-h.
+  - **Slow swings within the band:** in seed 4 the prey went 985 → 742 while its hunters rose
+    176 → 217.
+  - Judged over 200–300 bio-h instead (for comparison only, not the agreed rule): seed 1 passes, and
+    seeds 2–4 still fail on hunter drift (+23% to +41%).
+  - A straight-line drift limit counts any swing slower than the window as drift. The user's stated
+    aim was "a balanced cycle within a fixed range", so this part of the rule may be stricter than the
+    aim. Changing it now would be a decision made after seeing the data, and it is left to the user.
+- **The first wave** peaked at 1,530–1,857 E. coli (55–74 bio-h) and 509–623 Myxo (87–108 bio-h).
+- **The look:** still essentially no rippling (0–0.1 cells), 0.3–0.4% killing, about 6% scouting,
+  75–88% starving.
+- **Cost:** about 7.8 h of computing for the four, in parallel. The run checkpoints were removed at
+  the end, so extending these runs means running them again.
+
+Source: our runs.
+
 ### Build progress
 - **Milestone 1 (skeleton) done, 10 Oct 2026:** `settings.py`, `state.py`, `geometry.py`,
   `grids.py` and three test files in `predation-sim/`; 21 tests pass.
@@ -2570,8 +2602,9 @@ Source: the user's choice; B100, B101.
   while its hunters boom.
   **B101 (25 Oct 2026):** the full round of 70% + ÷6 passes 1 of 4 seeds. Both populations hold steady
   after the first wave: hunter means 131–153 (in band in all four seeds), prey means 541–752 (seed 4
-  in band; seeds 2 and 3 at 658 and 667). Adopted as the Recommended preset (B102); a ÷5 round is
-  running (B103).
+  in band; seeds 2 and 3 at 658 and 667). Adopted as the Recommended preset (B102).
+  **B103 (26 Oct 2026):** at refill ÷5 all four seeds meet both means (prey 707–828, hunters
+  171–201) but fail on drift: slow settling after the first wave, and slow swings within the band.
 - **Review of 23 Oct 2026 (`docs/review-2026-10-23.md`):** an independent check of code, data and docs. Main findings: the shipped Recommended preset (B89 + B95) was never run as a population; B95 blocks scouting by accident (`myxo_modes.py:114-116`); the mean-field model's scavenging term creates hunters from nothing (`meanfield/model.py:134`), so its picks for B86–B89 are unsupported; single-seed comparisons B85–B89 are within chance except the famine lysis share; slime and scout timers mix the real and biology clocks. Six decisions (D1–D6): the user chose every recommended option (B97).
 - **From the B88 result (17 Oct 2026):** with refill alone, the two targets pull against each other
   (about 150 hunters in the long run only with about 1,600 prey). Being tested in B89: fewer famine
